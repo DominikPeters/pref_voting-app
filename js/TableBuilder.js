@@ -1,7 +1,7 @@
 import { settings, state } from './globalState.js';
 import { rules, deleteIconHTML, colors } from './constants.js';
 import { calculateRules } from './CalculateRules.js';
-import { deleteCandidate, deleteVoter } from './InstanceManagement.js';
+import { deleteCandidate, deleteVoter, toggleAgenda } from './InstanceManagement.js';
 import Sortable from '../imports/sortable.core.esm.min.js';
 
 let previousComputation;
@@ -23,13 +23,17 @@ export function buildTable() {
         var cell = row.insertCell();
         cell.innerHTML = "Voter " + (i + 1);
         // allow deletion of last voter
-        if (state.N.length > 1 && i == state.N.slice(-1)[0]) {
-            row.classList.add("last-voter");
+        if (state.N.length > 1) {
             cell.innerHTML += " " + deleteIconHTML;
-            cell.children[0].dataset.voter = i;
-            cell.children[0].addEventListener("click", function () {
+            const deleteIcon = cell.children[0];
+            deleteIcon.classList.add("delete-voter-icon");
+            deleteIcon.dataset.voter = i;
+            deleteIcon.addEventListener("click", function () {
                 deleteVoter(this.dataset.voter);
             });
+        }
+        if (i == state.N.length - 1) {
+            row.classList.add("last-voter");
         }
         var cell = row.insertCell();
         cell.id = "voter" + i + "-vote";
@@ -42,13 +46,33 @@ export function buildTable() {
             chip.style.backgroundColor = colors[j];
             chip.innerHTML = state.cmap[j] || j;
             cell.appendChild(chip);
+            if (!state.agenda.includes(j)) {
+                chip.classList.add("not-agenda");
+            }
+            chip.addEventListener("click", function () {
+                toggleAgenda(this.dataset.candidate);
+            });
         }
         Sortable.create(cell, {
             dataIdAttr: 'data-candidate', 
             ghostClass: 'ghost-chip',
             onChange: (evt) => { updateProfile(); }
         });
-        row.insertCell().className = "empty-cell";
+        if (state.C.length > 1) {
+            const trashCell = row.insertCell();
+            trashCell.className = "empty-cell";
+            const trash = document.createElement("div");
+            trash.id = "voter" + i + "-trash";
+            trash.classList.add("ranking-trash");
+            trash.dataset.voter = i;
+            trashCell.appendChild(trash);
+            Sortable.create(trash, {
+                group: `voter${i}-vote`,
+                draggable: '.candidate-chip',
+                ghostClass: 'ghost-chip',
+                onAdd: (evt) => { deleteCandidate(evt.item.dataset.candidate); },
+            });
+        }
     }
     // spacer row
     var row = tablebody.insertRow();

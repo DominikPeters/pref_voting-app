@@ -328,6 +328,12 @@ button.active {
     outline: 2px solid #ccc;
 }
 
+.candidate-chip.not-agenda {
+    background-color: #dfdfdf !important;
+    text-shadow: none;
+    color: #999;
+}
+
 /************************
     * Modal styling
 ************************/
