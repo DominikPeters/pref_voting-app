@@ -5,7 +5,7 @@ import { setInstance } from './InstanceManagement.js';
 export function populateRandomizerModal(attachListeners=false) {
     for (let radio of document.getElementsByName('randomize')) {
         let parentLi = radio.parentElement;
-        let randomizer = { id: radio.value };
+        let randomizer = { "probmodel": radio.value };
         for (let div of parentLi.getElementsByTagName('div')) {
             div.style.display = radio.checked ? 'block' : 'none';
             // inputs
@@ -29,31 +29,23 @@ export function populateRandomizerModal(attachListeners=false) {
                 }
             }
         }
-        if (radio.value == "Euclidean VCR") {
-            randomizer["voter_radius"] = `${randomizer["radius"] / 2}`;
-            randomizer["candidate_radius"] = `${randomizer["radius"] / 2}`;
-            delete randomizer["radius"];
+        // Placket-Luce: check number of candidates
+        var alphas = document.getElementById("plackett_luce-alphas").value.split(",");
+        if (alphas.length !== state.C.length) {
+            document.getElementById("plackett_luce-alphas").value = Array(state.C.length).fill(1).join(",");
         }
-        if (radio.checked) {
-            // Check Euclidean integrity
-            document.getElementById("Euclidean VCR-warning").style.display = "none";
-            document.getElementById("Euclidean fixed-size-warning").style.display = "none";
-            if (radio.value == "Euclidean VCR" &&
-                document.getElementById("Euclidean VCR-voter_prob_distribution").value.includes("1d") != document.getElementById("Euclidean VCR-candidate_prob_distribution").value.includes("1d")) {
-                console.log("hi")
-                randomizer["voter_prob_distribution"] = "1d_interval";
-                randomizer["candidate_prob_distribution"] = "1d_interval";
-                document.getElementById("Euclidean VCR-warning").style.display = "block";
-            }
-            if (radio.value == "Euclidean fixed-size" &&
-                document.getElementById("Euclidean fixed-size-voter_prob_distribution").value.includes("1d") != document.getElementById("Euclidean fixed-size-candidate_prob_distribution").value.includes("1d")) {
-                randomizer["voter_prob_distribution"] = "1d_interval";
-                randomizer["candidate_prob_distribution"] = "1d_interval";
-                document.getElementById("Euclidean fixed-size-warning").style.display = "block";
-            }
-            // Set randomizer
-            settings.randomizer = randomizer;
-        }
+        // if (radio.checked) {
+        //     // Check Euclidean integrity
+        //     document.getElementById("Euclidean fixed-size-warning").style.display = "none";
+        //     if (radio.value == "Euclidean fixed-size" &&
+        //         document.getElementById("Euclidean fixed-size-voter_prob_distribution").value.includes("1d") != document.getElementById("Euclidean fixed-size-candidate_prob_distribution").value.includes("1d")) {
+        //         randomizer["voter_prob_distribution"] = "1d_interval";
+        //         randomizer["candidate_prob_distribution"] = "1d_interval";
+        //         document.getElementById("Euclidean fixed-size-warning").style.display = "block";
+        //     }
+        //     // Set randomizer
+        //     settings.randomizer = randomizer;
+        // }
         if (attachListeners) {
             radio.addEventListener('change', function () {
                 populateRandomizerModal();
@@ -63,12 +55,8 @@ export function populateRandomizerModal(attachListeners=false) {
 }
 
 export async function randomize() {
-    await window.micropip.install("pip/abcvoting-0.0.0-py3-none-any.whl?4", true);
     let result = window.pyodide.runPython(`
-        # from abcvoting.preferences import Profile
-        # from abcvoting import abcrules, properties, fileio
-        from abcvoting.generate import random_profile, PointProbabilityDistribution
-        # from abcvoting.output import output, INFO, DETAILS
+        from pref_voting.generate_profiles import generate_profile
         prob_distribution = ${JSON.stringify(settings.randomizer)}
         # go through fields in prob_distribution and replace strings with floats or ints if possible
         for field in prob_distribution:
@@ -82,14 +70,15 @@ export async function randomize() {
                     prob_distribution[field] = int(prob_distribution[field])
                 except ValueError:
                     pass
-        profile = random_profile(num_voters=${state.N.length}, num_cand=${state.C.length}, prob_distribution=prob_distribution)
-        u = {j : {i : 0 for i in range(${state.N.length})} for j in range(${state.C.length})}
-        for i, voter in enumerate(profile):
-            for candidate in voter.approved:
-                u[candidate][i] = 1
-        json.dumps(u)
+        profile = generate_profile(num_candidates=${state.C.length}, num_voters=${state.N.length}, **prob_distribution)
+        rankings = [[int(c) for c in voter] for voter in profile.rankings]
+        return_object = {'num_voters': int(profile.num_voters), 'num_cands': int(profile.num_cands), 'rankings': rankings}
+        json.dumps(return_object)
     `);
-    let u_ = JSON.parse(result);
-    setInstance(state.N, state.C, state.cost, u_, state.budget);
+    let parsed = JSON.parse(result);
+    let N_ = Array.from(Array(parsed.num_voters).keys());
+    let C_ = Array.from(Array(parsed.num_cands).keys());
+    let profile_ = parsed.rankings;
+    setInstance(N_, C_, profile_);
     buildTable();
 }

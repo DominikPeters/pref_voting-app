@@ -172,55 +172,44 @@
                     <button data-hystclose class="hystmodal__close">Close</button>
                     <strong>Configure Random Profile Generator</strong> <br>
                     <p class="citation" style="margin-top:0;">For more information, see
-                        <i>How to Sample Approval Elections?</i>
-                        Stanisław Szufa, Piotr Faliszewski, Łukasz Janeczko, Martin Lackner, Arkadii Slinko, Krzysztof
-                        Sornat, Nimrod Talmon.
-                        <a href="https://arxiv.org/abs/2207.01140">arXiv:2207.01140</a>
+                        <a href="https://comsoc-community.github.io/prefsampling/index.html">the prefsampling package</a>.
                     </p>
                     <ul id="probability-distributions-list">
                         <li>
                             <input type="radio" name="randomize" value="IC" checked id="IC">
                             <label for="IC">Impartial Culture (IC)</label>
+                        </li>
+                        <li>
+                            <input type="radio" name="randomize" value="IAC" id="IAC">
+                            <label for="IC">Impartial Anonymous Culture (IAC)</label>
+                        </li>
+                        <li>
+                            <input type="radio" name="randomize" value="urn" id="urn">
+                            <label for="Urn">Urn</label>
                             <div class="random-parameter">
-                                <input type="text" id="IC-p" value="0.5" size="4"> p : float in [0, 1] - probability of
-                                approving a project
+                                <input type="text" id="Urn-alpha" value="0.1" size="4"> alpha : float in [0, ∞) - 
+                                After sampling a ranking, alpha * m! copies are added to the urn, where m is the number of
+                                candidates.
+                                A value of 0 corresponds to Impartial Culture.
+                                A value of 1.0 means that in the second iteration, there is a chance of 0.5 that the
+                                ballot of the first iteration is chosen and a chance of 0.5 that a new ballot is drawn
+                                according to Impartial Culture.
                             </div>
                         </li>
                         <li>
-                            <input type="radio" name="randomize" value="IC fixed-size" id="IC fixed-size">
-                            <label for="IC fixed-size">Impartial Culture (IC) with fixed size</label>
+                            <input type="radio" name="randomize" value="mallows" id="mallows">
+                            <label for="mallows">Mallows</label>
                             <div class="random-parameter">
-                                <input type="text" id="IC-setsize" value="3" size="4"> setsize : int - number of
-                                projects to approve
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Euclidean VCR" id="Euclidean VCR">
-                            <label for="Euclidean VCR">Euclidean VCR (Voter Candidate Range)</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Euclidean VCR-radius" value="0.5" size="4"> radius : float -
-                                voters will approve projects located within this radius
+                                <input type="text" id="mallows-phi" value="0.8" size="4"> phi :
+                                float in [0, 1] - dispersion parameter of the Mallows model where phi = 1
+                                leads to Impartial Culture and phi = 0 leads to every voter having the same ranking.
                             </div>
                             <div class="random-parameter">
-                                <select id="Euclidean VCR-voter_prob_distribution">
-                                    <option value="1d_interval">1D Interval (uniform [0,1])</option>
-                                    <option value="1d_gaussian">1D Gaussian (0.5 &pm; 0.15)</option>
-                                    <option value="2d_square">2D Square (uniform [0,1]²)</option>
-                                    <option value="2d_disc">2D Disc (uniform, radius 1)</option>
-                                    <option value="2d_gaussian">2D Gaussian</option>
-                                    <option value="2d_gaussian_disc">2D Gaussian restricted to disc</option>
-                                </select> voter_prob_distribution : str - probability distribution of the voter points
-                            </div>
-                            <div class="random-parameter">
-                                <select id="Euclidean VCR-candidate_prob_distribution">
-                                    <option value="1d_interval">1D Interval (uniform [0,1])</option>
-                                    <option value="1d_gaussian">1D Gaussian (0.5 &pm; 0.15)</option>
-                                    <option value="2d_square">2D Square (uniform [0,1]²)</option>
-                                    <option value="2d_disc">2D Disc (uniform, radius 1)</option>
-                                    <option value="2d_gaussian">2D Gaussian</option>
-                                    <option value="2d_gaussian_disc">2D Gaussian restricted to disc</option>
-                                </select> candidate_prob_distribution : str - probability distribution of the project
-                                points
+                                <select id="mallows-normalise_phi">
+                                    <option value="False">False</option>
+                                    <option value="True">True</option>
+                                </select> normalise_phi : bool - whether to normalize the phi parameter as 
+                                as discussed in <a href="https://proceedings.mlr.press/v202/boehmer23b.html">Boehmer, Faliszewski and Kraiczy (2023)</a>.
                             </div>
                             <span id="Euclidean VCR-warning"
                                 style="color: red; display: none; margin-left: 2.5em; font-size: 90%;">
@@ -228,6 +217,22 @@
                             </span>
                         </li>
                         <li>
+                            <input type="radio" name="randomize" value="single_peaked_walsh" id="single_peaked_walsh">
+                            <label for="single_peaked_walsh">Single-peaked (uniformly distributed, "Walsh")</label>
+                        </li>
+                        <li>
+                            <input type="radio" name="randomize" value="single_peaked_conitzer" id="single_peaked_conitzer">
+                            <label for="single_peaked_conitzer">Single-peaked (peaks uniformly distributed, "Conitzer")</label>
+                        </li>
+                        <li>
+                            <input type="radio" name="randomize" value="single_peaked_circle" id="single_peaked_circle">
+                            <label for="single_peaked_circle">Single-peaked on a circle</label>
+                        </li>
+                        <li>
+                            <input type="radio" name="randomize" value="single_crossing" id="single_crossing">
+                            <label for="single_crossing">Single-crossing</label>
+                        </li>
+                        <!-- <li>
                             <input type="radio" name="randomize" value="Euclidean fixed-size" id="Euclidean fixed-size">
                             <label for="Euclidean fixed-size">Euclidean fixed size</label>
                             <div class="random-parameter">
@@ -259,130 +264,22 @@
                                 style="color: red; display: none; margin-left: 2.5em; font-size: 90%;">
                                 Error: Voter and project distributions have different dimensions.
                             </span>
-                        </li>
+                        </li> -->
                         <li>
-                            <input type="radio" name="randomize" value="Truncated Mallows" id="Truncated Mallows">
-                            <label for="Truncated Mallows">Truncated Mallows</label>
+                            <input type="radio" name="randomize" value="plackett_luce" id="plackett_luce">
+                            <label for="plackett_luce">Plackett-Luce</label>
                             <div class="random-parameter">
-                                <input type="text" id="Truncated Mallows-dispersion" value="0.8" size="4"> dispersion :
-                                float in [0, 1] - dispersion parameter of the Mallows model
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Truncated Mallows-setsize" value="3" size="4"> setsize : int -
-                                number of projects that each voter approves
+                                <input type="text" id="plackett_luce-alphas" value="1,1,1,1" size="10"> alphas : list of floats -
+                                Comma-separated list indicating for each alternative how many "balls" to place in the urn
+                                - rankings will be produced by sequentially drawing balls from the urn without replacement.
                             </div>
                         </li>
                         <li>
-                            <input type="radio" name="randomize" value="Urn" id="Urn">
-                            <label for="Urn">Urn</label>
+                            <input type="radio" name="randomize" value="didi" id="didi">
+                            <label for="didi">Direct Dirichlet</label>
                             <div class="random-parameter">
-                                <input type="text" id="Urn-p" value="0.5" size="4"> p : float in [0, 1] - If a new vote
-                                is generated, each project is approved with likelihood p.
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Urn-replace" value="0.1" size="4"> replace : float - New balls
-                                added to the urn in each iteration, relative to the original number.
-                                A value of 1.0 means that in the second iteration, there is a chance of 0.5 that the
-                                ballot of the first iteration is chosen and a chance of 0.5 that a new ballot is drawn
-                                from p-IC.
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Urn fixed-size" id="Urn fixed-size">
-                            <label for="Urn fixed-size">Urn with fixed size</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Urn fixed-size-setsize" value="3" size="4"> setsize : int -
-                                number of projects that each voter approves
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Urn fixed-size-replace" value="0.1" size="4"> replace : float -
-                                New balls added to the urn in each iteration, relative to the original number.
-                                The urn starts with (num_cand choose setsize) balls, each representing a set of
-                                projects with size setsize. This quantity is normalized to 1.0. The replace value is a
-                                float that indicates how many balls are added using this normalization. Specifically,
-                                replace * (num_cand choose setsize) are added in each iteration.
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Truncated Urn" id="Truncated Urn">
-                            <label for="Truncated Urn">Truncated Urn</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Truncated Urn-setsize" value="3" size="4"> setsize : int - number
-                                of projects that each voter approves
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Truncated Urn-replace" value="0.1" size="4"> replace : float -
-                                New balls added to the urn in each iteration, relative to the original number.
-                                The urn starts with num_cand factorial balls, each representing a ranking of projects.
-                                This quantity is normalized to 1.0. The replace value is a float that indicates how many
-                                balls are added using this normalization. Specifically, replace * (num_cand factorial)
-                                are added in each iteration.
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Resampling" id="Resampling">
-                            <label for="Resampling">Resampling</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Resampling-p" value="0.5" size="4"> p : float in [0, 1] -
-                                Fraction of projects that will be approved by the central ballot. Precisely, the
-                                central ballot will approve the first floor(p * num_cand) projects.
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Resampling-phi" value="0.5" size="4"> phi : float in [0, 1] -
-                                Probability to resample an approval. For each generated vote, we go through all
-                                projects. For each project, we copy the approval of the central ballot with
-                                probability 1 - phi. Otherwise, with probability phi, we resample the approval of the
-                                project (so that the generated vote approves that project with probability p).
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Disjoint Resampling" id="Disjoint Resampling">
-                            <label for="Disjoint Resampling">Disjoint Resampling</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Disjoint Resampling-num_groups" value="3" size="3"> num_groups :
-                                int - Corresponds to the parameter g in (p,phi,g)-Disjoint Resampling. The model
-                                randomly partitions the projects into num_groups groups. To generate
-                                a vote, the model first randomly selects a group. Then, it samples a vote from a
-                                (p,phi)-resampling model, where the central ballot approves exactly all projects
-                                in the selected group. (Thus, the parameter p is not used to obtain the central
-                                ballot, but is used in case of resampling.)
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Disjoint Resampling-phi" value="0.5" size="4"> phi : float in [0,
-                                1] - Probability to resample an approval.
-                                For each generated vote, we go through all projects. For each project, we
-                                use copy the approval of the central ballot with probability 1 - phi. Otherwise,
-                                with probability `phi`, we resample the approval of the project (so that the
-                                generated vote approves that project with probability p).
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Disjoint Resampling-p" value="0.5" size="4"> p : float in [0, 1]
-                                Probability of approving a project in case that the model resamples.
-                            </div>
-                        </li>
-                        <li>
-                            <input type="radio" name="randomize" value="Noise" id="Noise">
-                            <label for="Noise">Random Noise</label>
-                            <div class="random-parameter">
-                                <input type="text" id="Noise-p" value="0.5" size="4"> p : float in [0, 1] -
-                                Fraction of projects that will be approved by the central ballot. Precisely, the
-                                central ballot will approve the first floor(p * num_cand) projects.
-                            </div>
-                            <div class="random-parameter">
-                                <input type="text" id="Noise-phi" value="0.5" size="4"> phi : float in [0, 1] -
-                                Probability to resample an approval. For each generated vote, we go through all
-                                projects. For each project, we copy the approval of the central ballot with
-                                probability 1 - phi. Otherwise, with probability phi, we resample the approval of the
-                                project (so that the generated vote approves that project with probability p).
-                            </div>
-                            <div class="random-parameter">
-                                <select id="Noise-distance">
-                                    <option value="hamming">Hamming</option>
-                                    <option value="jaccard">Jaccard</option>
-                                    <option value="zelinka">Zelinka</option>
-                                    <option value="bunke-shearer">Bunke-Shearer</option>
-                                </select> distance : string - Distance metric used to measure the distance between two
-                                rankings.
+                                <input type="text" id="didi-alphas" value="1,1,1,1" size="10"> alphas : list of floats -
+                                The Direct Dirichlet model is very similar to the Plackett-Luce model, but the quality of the candidates is drawn from a Dirichlet distribution. The key difference is that the higher the sum of the alphas, the more correlated the votes are (the more concentrated the Dirichlet distribution is).
                             </div>
                         </li>
                     </ul>
