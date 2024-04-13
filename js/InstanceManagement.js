@@ -102,7 +102,7 @@ export function setInstance(N_, C_, profile_) {
     state.N = N_;
     state.C = C_;
     state.profile = profile_;
-    state.agenda = C_;
+    state.agenda = [...C_];
     buildTable();
 }
 
