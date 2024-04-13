@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weak order drag and drop</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        .weak-order {
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            list-style-type: none;
+            cursor: grab;
+        }
+
+        .indifference-class {
+            display: flex;
+            border: 1px solid lightgray;
+            padding: 10px;
+            list-style-type: none;
+            margin-bottom: 10px;
+            background-color: white;
+        }
+
+        .indifference-class li {
+            margin-right: 10px;
+            padding: 10px;
+            border: 1px solid lightgray;
+            background-color: wheat;
+        }
+    </style>
+    
+</head>
+<body>
+    <ul class="weak-order">
+        <li>
+            <ul class="indifference-class">
+                <li>Item 1</li>
+                <li>Item 2</li>
+            </ul>
+        </li>
+        <li>
+            <ul class="indifference-class">
+                <li>Item 3</li>
+                <li>Item 4</li>
+            </ul>
+        </li>
+        <li>
+            <ul class="indifference-class">
+            </ul>
+        </li>
+    </ul>
+    <hr>
+    <ul class="weak-order">
+        <li>
+            <ul class="indifference-class">
+                <li>Item 1</li>
+                <li>Item 2</li>
+            </ul>
+        </li>
+        <li>
+            <ul class="indifference-class">
+                <li>Item 3</li>
+                <li>Item 4</li>
+            </ul>
+        </li>
+        <li>
+            <ul class="indifference-class">
+            </ul>
+        </li>
+    </ul>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <script>
+        let weakOrderIndex = 0;
+        for (let weakOrder of document.querySelectorAll('.weak-order')) {
+            weakOrder.id = 'weak-order-' + weakOrderIndex++;
+            Sortable.create(weakOrder, {
+                animation: 150,
+            });
+            for (let el of weakOrder.querySelectorAll('.indifference-class')) {
+                Sortable.create(el, {
+                    group: weakOrder.id,
+                    animation: 150,
+                });
+            }
+        }
+    </script>
+</body>
+</html>
