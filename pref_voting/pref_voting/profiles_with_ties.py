@@ -19,7 +19,7 @@ from pref_voting.weighted_majority_graphs import (
     SupportGraph,
 )
 import os
-import pandas as pd
+# import pandas as pd
 
 class ProfileWithTies(object):
     """An anonymous profile of (truncated) strict weak orders of :math:`n` candidates. 
