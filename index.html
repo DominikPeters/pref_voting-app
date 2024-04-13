@@ -153,8 +153,10 @@
                 </summary>
                 <p style="margin-top: 0.5em; margin-bottom: 0.5em;">Drop a file to import. Supported formats:</p>
                 <ul style="margin-top: 0; margin-bottom: 0; padding-left: 1em; font-size: 90%;">
-                    <li>matrix .txt</li>
-                    <li>pabulib .pb</li>
+                    <li>preflib .soc</li>
+                    <li>.abif</li>
+                    <li>.json (<a href="https://pref-voting.readthedocs.io/en/latest/io.html">format</a>)</li>
+                    <li>.csv (<a href="https://pref-voting.readthedocs.io/en/latest/io.html">format</a>)</li>
                 </ul>
             </details>
 
@@ -211,10 +213,6 @@
                                 </select> normalise_phi : bool - whether to normalize the phi parameter as 
                                 as discussed in <a href="https://proceedings.mlr.press/v202/boehmer23b.html">Boehmer, Faliszewski and Kraiczy (2023)</a>.
                             </div>
-                            <span id="Euclidean VCR-warning"
-                                style="color: red; display: none; margin-left: 2.5em; font-size: 90%;">
-                                Error: Voter and project distributions have different dimensions.
-                            </span>
                         </li>
                         <li>
                             <input type="radio" name="randomize" value="single_peaked_walsh" id="single_peaked_walsh">
@@ -404,8 +402,10 @@
         <div id="drop-overlay">
             <div id="drop-overlay-instruction">Drop a file to import. Supported formats:
                 <ul>
-                    <li>0/1 matrix .txt</li>
-                    <li>pabulib .pb</li>
+                    <li>preflib .soc</li>
+                    <li>.abif</li>
+                    <li>.json</li>
+                    <li>.csv</li>
                 </ul>
             </div>
         </div>
