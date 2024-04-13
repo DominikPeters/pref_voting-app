@@ -138,16 +138,16 @@ def write_json(profile, filename):
     prof = profile.to_profile_with_ties() if type(profile) == Profile else profile
 
     prof_as_dict = {
-            "candidates": profile.candidates,
+            "candidates": [int(c) for c in profile.candidates],
             "rankings": [{"ranking": {
-                int(cand) if isinstance(cand, np.int64) else cand: int(rank) 
+                int(cand): int(rank) 
                 for cand,rank in r.rmap.items()}, 
                 "count": int(c)} 
                 for r,c in zip(*prof.rankings_counts)],
             "cmap": profile.cmap
         }
     with open(filename, "w") as f:
-        json.dump(prof_as_dict, f)
+        json.dump(prof_as_dict, f, indent=2)
 
     print(f"Election written to {filename}.")
     return filename
