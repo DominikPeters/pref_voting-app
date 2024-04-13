@@ -44,6 +44,7 @@ function _calculateRule(rule, forceIrresolute = false) {
     let result;
     result = window.pyodide.runPython(`
         results = ${rules[rule].command.replace("profile)", "profile, curr_cands=agenda)")}
+        results = [int(x) for x in results]
         json.dumps(results)
     `);
     return JSON.parse(result);
