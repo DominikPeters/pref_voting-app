@@ -10,7 +10,7 @@
 
 from math import ceil
 import numpy as np
-from scipy.spatial import distance
+# from scipy.spatial import distance
 from functools import partial
 
 from pref_voting.utility_profiles import UtilityProfile

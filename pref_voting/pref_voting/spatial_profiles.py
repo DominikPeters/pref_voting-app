@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn as sns
+# import seaborn as sns
 from pref_voting.utility_functions import *
 from pref_voting.utility_profiles import UtilityProfile
 

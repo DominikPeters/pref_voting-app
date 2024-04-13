@@ -15,14 +15,13 @@ from pref_voting.generate_utility_profiles import linear_utility
 import numpy as np 
 import math
 import random
-from scipy.stats import gamma
 from itertools import permutations
 
 from pref_voting.profiles_with_ties import ProfileWithTies
-from ortools.linear_solver import pywraplp
+# from ortools.linear_solver import pywraplp
 from prefsampling.ordinal import impartial, impartial_anonymous, urn, plackett_luce, didi, stratification, single_peaked_conitzer, single_peaked_walsh, single_peaked_circle, single_crossing, euclidean, mallows
 
-from prefsampling.core.euclidean import EuclideanSpace
+# from prefsampling.core.euclidean import EuclideanSpace
 from collections import Counter
 
 # ############
@@ -326,14 +325,14 @@ def get_rankings(num_candidates, num_voters, **kwargs):
                        alpha,
                        seed=seed)
         
-    elif probmodel == "URN-R":
+    # elif probmodel == "URN-R":
         
-        rng = np.random.default_rng(seed)
-        alpha = round(math.factorial(num_candidates) * gamma.rvs(0.8, random_state=rng))
-        rankings = urn(num_voters,
-                       num_candidates,
-                       alpha,
-                       seed=seed)
+    #     rng = np.random.default_rng(seed)
+    #     alpha = round(math.factorial(num_candidates) * gamma.rvs(0.8, random_state=rng))
+    #     rankings = urn(num_voters,
+    #                    num_candidates,
+    #                    alpha,
+    #                    seed=seed)
         
     elif probmodel == "plackett_luce":
         

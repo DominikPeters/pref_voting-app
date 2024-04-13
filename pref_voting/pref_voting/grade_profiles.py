@@ -9,7 +9,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pandas as pd
+# import pandas as pd
 from tabulate import tabulate
 from pref_voting.mappings import Grade, _Mapping
 from pref_voting.profiles_with_ties import ProfileWithTies

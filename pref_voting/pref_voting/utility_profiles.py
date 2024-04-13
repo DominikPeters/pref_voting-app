@@ -10,7 +10,7 @@
 from math import ceil
 import numpy as np
 import json
-from scipy import stats
+# from scipy import stats
 import networkx as nx
 from tabulate import tabulate
 from tabulate import  SEPARATING_LINE
