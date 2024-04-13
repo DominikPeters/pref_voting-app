@@ -13,7 +13,7 @@ from tabulate import tabulate
 import matplotlib.pyplot as plt
 import string
 from itertools import combinations, permutations
-from ortools.linear_solver import pywraplp
+# from ortools.linear_solver import pywraplp
 
 import numpy as np
 

@@ -8,7 +8,7 @@
 
 from pref_voting.voting_method import  *
 from pref_voting.weighted_majority_graphs import  MajorityGraph, MarginGraph
-import nashpy as nash
+# import nashpy as nash
 
 @vm(name="Random Dictator")
 def random_dictator(profile, curr_cands = None): 
