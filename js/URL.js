@@ -1,13 +1,11 @@
 import { state } from './globalState.js';
 import { profileToMatrix } from './utils.js';
-import { loadMatrix } from './InstanceManagement.js';
+import { setInstance } from './InstanceManagement.js';
 import { buildTable } from './TableBuilder.js';
 
 
 export function copyURL() {
-    let stateString = `${state.budget}&` 
-        + state.C.map(c => state.cost[c]).join(",") + "&"
-        + profileToMatrix(state).replaceAll("\n", "&").slice(0, -1);
+    let stateString = JSON.stringify(state.N.map(i => state.profile[i]));
     let URL = window.location.origin + window.location.pathname + "?" + stateString;
     console.log(URL);
     let button = document.getElementById("copy-url-button");
@@ -30,19 +28,19 @@ export function readURL() {
     if (window.location.search) {
         try {
             let stateString = window.location.search.substring(1);
-            let info = stateString.split("&");
-            let matrix = info.slice(2).join("\n");
-            state.budget = parseInt(info[0]);
-            if (!loadMatrix(matrix)) {
-                loadStandardInstance();
-            } else {
-                state.cost = Object.fromEntries(info[1].split(",").map((c, i) => [i, parseInt(c)]));
-                buildTable();
+            console.log(stateString);
+            const parsed = JSON.parse(stateString);
+            let N_ = Array.from(Array(parsed.length).keys());
+            let C_ = Array.from(Array(parsed[0].length).keys());
+            let profile_ = {};
+            for (let i of N_) {
+                profile_[i] = parsed[i];
             }
+            setInstance(N_, C_, profile_);
         } catch (e) {
             console.error(e);
-            loadStandardInstance();
+            // loadStandardInstance();
         }
-        buildTable();
+        // buildTable();
     }
 }
