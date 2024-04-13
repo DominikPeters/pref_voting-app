@@ -21,6 +21,13 @@ function dragEndHandler(ev) {
     ev.preventDefault();
 }
 
+const importFunctions = {
+    "soc": "preflib_to_profile(filename, as_linear_profile=True)",
+    "csv": "csv_to_profile(filename, as_linear_profile=True)",
+    "json": "json_to_profile(filename, as_linear_profile=True)",
+    "abif": "abif_to_profile(filename)"
+}
+
 function dropHandler(ev) {
     document.getElementById('drop-overlay').style.display = "none";
     ev.preventDefault();
@@ -32,39 +39,30 @@ function dropHandler(ev) {
                 let reader = new FileReader();
                 reader.onload = function (e) {
                     let text = e.target.result;
-                    if (file.name.endsWith(".txt")) {
-                        if (loadMatrix(text)) {
-                            buildTable();
-                        }
-                    } else if (file.name.endsWith(".pb")) {
-                        // try {
-                            let pbImport = JSON.parse(window.pyodide.runPython(`
+                    // is it a valid extension?
+                    for (let extension in importFunctions) {
+                        if (file.name.endsWith("." + extension)) {
+                            try {
+                                let parsed = JSON.parse(window.pyodide.runPython(`
+from pref_voting.io.readers import *
 filetext = """${text}"""
-instance, profile = parse_pabulib_from_string(filetext)
-return_object = {'num_projects': len(instance.project_meta.keys()), 'num_voter': profile.num_ballots(), 'budget': int(instance.budget_limit)}
-cost = {}
-project_index = {}
-for j, project in enumerate(instance.project_meta.keys()):
-    cost[j] = int(project.cost)
-    project_index[project.name] = j
-u = {j : {i : 0 for i in range(profile.num_ballots())} for j in range(return_object["num_projects"])}
-for i, voter in enumerate(profile):
-    for project in voter:
-        u[project_index[project.name]][i] = 1
-return_object['cost'] = cost
-return_object['u'] = u
+filename = "profile.${extension}"
+with open(filename, "w") as f:
+    f.write(filetext)
+profile = ${importFunctions[extension]}
+rankings = [[int(c) for c in voter] for voter in profile.rankings]
+return_object = {'num_voters': int(profile.num_voters), 'num_cands': int(profile.num_cands), 'rankings': rankings}
 json.dumps(return_object)
-                            `));
-                            let N_ = Array.from(Array(pbImport.num_voter).keys());
-                            let C_ = Array.from(Array(pbImport.num_projects).keys());
-                            let cost_ = pbImport.cost;
-                            let u_ = pbImport.u;
-                            let budget_ = pbImport.budget;
-                            setInstance(N_, C_, cost_, u_, budget_);
-                            buildTable();
-                        // } catch (e) {
-                        //     console.log(e);
-                        // }
+                                `));
+                                let N_ = Array.from(Array(parsed.num_voters).keys());
+                                let C_ = Array.from(Array(parsed.num_cands).keys());
+                                let profile_ = parsed.rankings;
+                                setInstance(N_, C_, profile_);
+                                buildTable();
+                            } catch (e) {
+                                console.error(e);
+                            }
+                        }
                     }
                 };
                 reader.readAsText(file);
