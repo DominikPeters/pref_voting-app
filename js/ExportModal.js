@@ -11,14 +11,15 @@ function downloadExport(exportPre, filename) {
 
 export async function populateExportModal() {
     await window.pyodide.runPython(`
+        from pref_voting.io.writers import *
         write_preflib(profile, "profile.soc")
         write_abif(profile, "profile.abif")
-        # write_json(profile, "profile.json")
+        write_json(profile, "profile.json")
         write_csv(profile, "profile.csv")
     `);
-    for (let format of ['soc', 'abif', 'csv']) {
+    for (let format of ['soc', 'json', 'abif', 'csv']) {
         document.getElementById(`${format}-export`).innerText = pyodide.FS.readFile(`profile.${format}`, { encoding: 'utf8' });
         let button = document.getElementById(`${format}-export-button`);
-        button.addEventListener("click", () => { downloadExport(`export-${format}`, `profile.${format}`) });
+        button.addEventListener("click", () => { downloadExport(`${format}-export`, `profile.${format}`) });
     }
 }
