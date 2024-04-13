@@ -7,11 +7,11 @@ import Sortable from '../imports/sortable.core.esm.min.js';
 let previousComputation;
 export function buildTable() {
     // check if we can skip computation
-    var thisComputation = JSON.stringify([settings, rules, state.N, state.C, state.u]);
-    if (previousComputation && thisComputation == previousComputation) {
-        return;
-    }
-    previousComputation = thisComputation;
+    // var thisComputation = JSON.stringify([settings, rules, state.N, state.C, state.profile, state.agenda]);
+    // if (previousComputation && thisComputation == previousComputation) {
+    //     return;
+    // }
+    // previousComputation = thisComputation;
 
     var table = document.getElementById("profile-table");
     table.replaceChildren(); // clear table
@@ -36,27 +36,36 @@ export function buildTable() {
             row.classList.add("last-voter");
         }
         var cell = row.insertCell();
-        cell.id = "voter" + i + "-vote";
+        const voteContainer = document.createElement("span");
+        voteContainer.classList.add("vote-container");
+        voteContainer.id = "voter" + i + "-vote";
         for (var j of state.profile[i]) {
-            var chip = document.createElement("button");
+            var chip = document.createElement("div");
             chip.id = "voter" + i + "-candidate" + j + "-chip";
             chip.dataset.candidate = j;
             chip.dataset.voter = i;
             chip.className = "candidate-chip";
             chip.style.backgroundColor = colors[j];
             chip.innerHTML = state.cmap[j] || j;
-            cell.appendChild(chip);
             if (!state.agenda.includes(j)) {
                 chip.classList.add("not-agenda");
             }
             chip.addEventListener("click", function () {
                 toggleAgenda(this.dataset.candidate);
             });
+            voteContainer.appendChild(chip);
         }
-        Sortable.create(cell, {
+        cell.appendChild(voteContainer);
+        Sortable.create(voteContainer, {
+            group: `voter${i}-vote`,
             dataIdAttr: 'data-candidate', 
+            draggable: '.candidate-chip',
             ghostClass: 'ghost-chip',
-            onChange: (evt) => { updateProfile(); }
+            onChange: (evt) => { updateProfile(); },
+            onStart: (evt) => { if (state.C.length > 1) { const i = evt.item.dataset.voter; document.getElementById(`voter${i}-trash`).style.display = 'inline-block'; } },
+            onEnd: (evt) => { for (const trash of document.querySelectorAll('.ranking-trash')) { trash.style.display = 'none'; } },
+            // while hovering over trash, add padding to more easily go back to ranking
+            onMove: (evt) => { if (evt.to.className == 'ranking-trash') { evt.from.style.paddingRight = '37.5px'; } else { evt.from.style.paddingRight = '0'; } },
         });
         if (state.C.length > 1) {
             const trashCell = row.insertCell();

@@ -43,7 +43,7 @@ function populateCommitteeInfoModal(rule) {
 function _calculateRule(rule, forceIrresolute = false) {
     let result;
     result = window.pyodide.runPython(`
-        results = ${rules[rule].command}
+        results = ${rules[rule].command.replace("profile)", "profile, curr_cands=agenda)")}
         json.dumps(results)
     `);
     return JSON.parse(result);
@@ -63,6 +63,7 @@ export async function calculateRules() {
     profileString = profileString.slice(0, -2) + "})";
     window.pyodide.runPython(`
         ${profileString}
+        agenda = ${JSON.stringify(state.agenda)}
     `);
     let table = document.getElementById("profile-table");
     let tBody = table.getElementsByTagName("tbody")[0];
@@ -76,7 +77,7 @@ export async function calculateRules() {
             let cell = document.getElementById("rule-" + rule + "-results");
             cell.innerHTML = "";
             for (let j of result) {
-                var chip = document.createElement("button");
+                var chip = document.createElement("div");
                 chip.className = "candidate-chip";
                 chip.style.backgroundColor = colors[j];
                 chip.innerHTML = state.cmap[j] || j;

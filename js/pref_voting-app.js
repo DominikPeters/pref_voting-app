@@ -66,7 +66,9 @@ document.addEventListener('DOMContentLoaded', function () {
             tippy.hideAll();
         },
         afterClose: function (modal) {
-            buildTable();
+            if (modal.openedWindow.id === "rule-choice-modal") {
+                buildTable();
+            }
         },
     });
     populateRuleChoiceModal();
