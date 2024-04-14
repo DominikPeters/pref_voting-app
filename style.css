@@ -1,6 +1,6 @@
 :root {
     --form-control-color: hsl(198, 100%, 28%);
-    --sidebar-width: 25rem;
+    --sidebar-width: 26rem;
 }
 
 body {
@@ -349,6 +349,7 @@ button.active {
 
 .candidate-chip {
     display: inline-block;
+    user-select: none;
     font-size: 13px;
     border: none;
     border-radius: 5px;
@@ -571,7 +572,6 @@ ul#probability-distributions-list li {
         width: 100vw;
         max-width: 100vw;
         overflow-x: scroll;
-        font-size: 90%;
     }
 
     #dismissable-about {
@@ -595,9 +595,10 @@ ul#probability-distributions-list li {
     }
 
     .candidate-chip {
-        width: 18px;
-        height: 18px;
-        padding: 1px;
+        width: 28px;
+        height: 25px;
+        padding-bottom: 0;
+        line-height: 1.7;
     }
 }
 
