@@ -1,6 +1,5 @@
-import { state } from './globalState.js';
 import { buildTable } from './TableBuilder.js';
-import { setInstance, loadMatrix } from './InstanceManagement.js';
+import { setInstance } from './InstanceManagement.js';
 
 function dragOverHandler(ev) {
     if (ev.dataTransfer.types.includes('Files')) {

@@ -1,17 +1,15 @@
 import { state, settings } from './globalState.js';
 import { rules, properties, infoIconHtml } from './constants.js';
-import { debounce, sum, round2, profileToMatrix } from './utils.js';
 import { setRuleActive, populateRuleChoiceModal } from './RuleSelection.js';
 import { populateExportModal } from './ExportModal.js';
 import { populateRandomizerModal, randomize } from './Randomizer.js';
 import { copyURL, readURL } from './URL.js';
-import { copyMatrix, pasteMatrix } from './clipboard.js';
 import { setUpDragDropHandlers } from './FileDrop.js';
 import { loadPython } from './loadPython.js';
 import { buildTable } from './TableBuilder.js'; 
 import { calculateRules } from './CalculateRules.js';
 import { startLog, getLog, storedLogs, logger } from './logger.js';
-import { addVoter, addCandidate, loadMatrix } from './InstanceManagement.js';
+import { addVoter, addCandidate } from './InstanceManagement.js';
 import { populateLibraryModal } from './LibraryModal.js';
 import { addSettingChangeHandlers } from './SettingsManagement.js';
 
@@ -38,8 +36,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (window.location.search) {
         readURL();
     } else {
-        let matrix = "1111\n1111";
-        loadMatrix(matrix);
         buildTable();
     }
 
@@ -55,7 +51,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("random-button").addEventListener('click', randomize);
     document.getElementById("export-button").addEventListener('click', populateExportModal);
     document.getElementById("copy-url-button").addEventListener('click', copyURL);
-    document.addEventListener('paste', pasteMatrix);
 
     addSettingChangeHandlers();
 

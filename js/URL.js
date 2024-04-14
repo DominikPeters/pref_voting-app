@@ -1,7 +1,5 @@
 import { state } from './globalState.js';
-import { profileToMatrix } from './utils.js';
 import { setInstance } from './InstanceManagement.js';
-import { buildTable } from './TableBuilder.js';
 
 
 export function copyURL() {
@@ -16,12 +14,6 @@ export function copyURL() {
             button.innerHTML = originalHTML;
         }, 1000);
     });
-}
-
-function loadStandardInstance() {
-    let matrix = "111100000000000\n111010000000000\n111001000000000\n000000111000000\n000000000111000\n000000000000111";
-    loadMatrix(matrix);
-    state.budget = 12;
 }
 
 export function readURL() {
@@ -39,8 +31,6 @@ export function readURL() {
             setInstance(N_, C_, profile_);
         } catch (e) {
             console.error(e);
-            // loadStandardInstance();
         }
-        // buildTable();
     }
 }
