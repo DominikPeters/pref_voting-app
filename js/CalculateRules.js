@@ -61,9 +61,12 @@ export async function calculateRules() {
     // add cmap
     profileString += ", cmap = {";
     for (let key in state.cmap) {
-        profileString += key + ": '" + state.cmap[key] + "', ";
+        if (state.C.includes(parseInt(key))) {
+            profileString += key + ": '" + state.cmap[key] + "', ";
+        }
     }
     profileString = profileString.slice(0, -2) + "})";
+    console.log(profileString);
     window.pyodide.runPython(`
         ${profileString}
         agenda = ${JSON.stringify(state.agenda)}

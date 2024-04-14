@@ -80,5 +80,4 @@ export async function randomize() {
     let C_ = Array.from(Array(parsed.num_cands).keys());
     let profile_ = parsed.rankings;
     setInstance(N_, C_, profile_);
-    buildTable();
 }

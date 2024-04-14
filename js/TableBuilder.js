@@ -138,6 +138,6 @@ function updateProfile() {
         const voteElem = document.getElementById("voter" + i + "-vote");
         const vote = Array.from(voteElem.children).map(child => parseInt(child.dataset.candidate));
         state.profile[i] = vote;
-        calculateRules();
     }
+    calculateRules();
 }
