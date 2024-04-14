@@ -30,7 +30,7 @@ export async function loadPython() {
     loading.innerHTML = "Loading... (80%)";
     await window.pyodide.runPythonAsync(`
         from pyodide.http import pyfetch
-        response = await pyfetch("/pref_voting/pref_voting.zip?v=15")
+        response = await pyfetch("pref_voting.zip")
         await response.unpack_archive(format="zip")
     `);
     await window.pyodide.runPython(`
