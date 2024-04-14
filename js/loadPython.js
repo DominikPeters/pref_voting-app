@@ -23,7 +23,6 @@ export async function loadPython() {
         import js
         import json
         from prefsampling.ordinal import *
-        print(mallows(5, 10, 0.5))
     `);
     setTimeout(function () {
         loading.innerHTML = "Loading... (90%)";
@@ -40,6 +39,8 @@ export async function loadPython() {
         from pref_voting.iterative_methods import *
         from pref_voting.c1_methods import *
         from pref_voting.margin_based_methods import *
+        from pref_voting.combined_methods import *
+        from pref_voting.other_methods import *
     `);
     // enable all buttons and inputs
     document.querySelectorAll("button, input").forEach(function (el) {
