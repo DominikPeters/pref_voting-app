@@ -225,6 +225,21 @@ table thead tr td {
     border-bottom: 2px solid #dadde1 !important;
 }
 
+table tr.category-row:first-child td {
+    border-top: 0;
+    padding-top: 0;
+}
+
+table tr.category-row td {
+    text-transform: uppercase;
+    font-size: 75%;
+    border-left: none;
+    border-right: none;
+    font-weight: 600;
+    padding-top: 7px;
+    padding-bottom: 0;
+}
+
 table th {
     font-weight: bold;
 }
@@ -248,7 +263,7 @@ td.empty-cell {
     background-color: white;
 }
 
-#profile-table tr.rule-row:hover {
+/* #profile-table tr.rule-row:hover {
     background-color: hsl(243, 76%, 94%);
     color: hsl(243, 76%, 10%);
     cursor: pointer;
@@ -259,11 +274,7 @@ td.empty-cell {
     background-color: hsl(243, 76%, 88%);
     cursor: pointer;
     transform: scale(0.99);
-}
-
-#profile-table td.in-committee {
-    background-color: hsla(243, 30%, 60%, 0.1);
-}
+} */
 
 .delete-icon {
     cursor: pointer;
@@ -414,6 +425,13 @@ summary {
 
 #rule-choice-list li {
     margin-top: 0.25em;
+}
+
+#rule-choice-list li.category-item {
+    margin-top: 1em;
+    text-transform: uppercase;
+    font-size: 78%;
+    font-weight: 600;
 }
 
 #rule-choice-list li input {

@@ -94,10 +94,19 @@ export function buildTable() {
         // not enough space for sticky
         tablefoot.style.position = 'static';
     }
+    let currentCategory = "";
     // already draw rows for each rule to avoid flickering
     for (let rule in rules) {
         if (!rules[rule].active) {
             continue;
+        }
+        if (rules[rule].category != currentCategory) {
+            currentCategory = rules[rule].category;
+            let row = tablefoot.insertRow();
+            row.classList.add("category-row");
+            let cell = row.insertCell();
+            cell.colSpan = 4;
+            cell.innerHTML = currentCategory;
         }
         let row = tablefoot.insertRow();
         row.id = "rule-" + rule + "-row";

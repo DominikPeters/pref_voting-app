@@ -21,7 +21,15 @@ export function populateRuleChoiceModal() {
     });
 
     let list = document.getElementById('rule-choice-list');
+    let currentCategory = '';
     for (let rule of Object.keys(rules)) {
+        if (rules[rule].category != currentCategory) {
+            currentCategory = rules[rule].category;
+            let li = document.createElement('li');
+            li.classList.add('category-item');
+            li.appendChild(document.createTextNode(currentCategory));
+            list.appendChild(li);
+        }
         let li = document.createElement('li');
         let checkbox = document.createElement('input');
         checkbox.type = 'checkbox';
