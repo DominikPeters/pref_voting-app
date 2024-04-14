@@ -136,7 +136,12 @@ export function buildTable() {
 function updateProfile() {
     for (var i of state.N) {
         const voteElem = document.getElementById("voter" + i + "-vote");
-        const vote = Array.from(voteElem.children).map(child => parseInt(child.dataset.candidate));
+        const vote = [];
+        for (const child of voteElem.children) {
+            if (!child.classList.contains("sortable-drag")) {
+                vote.push(parseInt(child.dataset.candidate));
+            }
+        }
         state.profile[i] = vote;
     }
     calculateRules();
