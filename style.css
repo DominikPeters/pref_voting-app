@@ -276,6 +276,10 @@ td.empty-cell {
     transform: scale(0.99);
 } */
 
+#profile-table tr.rule-row .candidate-chip {
+    cursor: default;
+}
+
 .delete-icon {
     cursor: pointer;
     display: inline;

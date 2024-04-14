@@ -87,10 +87,10 @@ export async function calculateRules() {
                 cell.appendChild(chip);
             }
             let row = document.getElementById("rule-" + rule + "-row");
-            row.dataset.hystmodal = "#committee-info-modal";
-            row.onclick = function () {
-                populateCommitteeInfoModal(rule);
-            };
+            // row.dataset.hystmodal = "#committee-info-modal";
+            // row.onclick = function () {
+            //     populateCommitteeInfoModal(rule);
+            // };
             if (settings.showPropertyinTable) {
                 setTimeout(() => {
                     let cell = document.getElementById("rule-" + rule + "-property-cell");
