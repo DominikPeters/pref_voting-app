@@ -66,7 +66,6 @@ export async function calculateRules() {
         }
     }
     profileString = profileString.slice(0, -2) + "})";
-    console.log(profileString);
     window.pyodide.runPython(`
         ${profileString}
         agenda = ${JSON.stringify(state.agenda)}
