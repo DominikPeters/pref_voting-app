@@ -4,7 +4,7 @@ export async function loadPython() {
     document.getElementById("loading-container").style.display = "block";
     let loading = document.getElementById("loading-indicator");
     loading.innerHTML = "Loading... (20%)";
-    window.pyodide = await loadPyodide();
+    window.pyodide = await loadPyodide({lockFileURL: "repodata.json"});
     loading.innerHTML = "Loading... (30%)";
     await window.pyodide.loadPackage("micropip");
     const micropip = window.pyodide.pyimport("micropip");
