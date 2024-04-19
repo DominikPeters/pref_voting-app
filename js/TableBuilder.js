@@ -1,7 +1,7 @@
 import { settings, state } from './globalState.js';
 import { rules, deleteIconHTML, colors } from './constants.js';
 import { calculateRules } from './CalculateRules.js';
-import { deleteCandidate, deleteVoter, toggleAgenda } from './InstanceManagement.js';
+import { deleteCandidate, deleteVoter, toggleAgenda, updateVotingMlLink } from './InstanceManagement.js';
 import Sortable from '../imports/sortable.core.esm.min.js';
 
 let previousComputation;
@@ -12,23 +12,7 @@ export function buildTable() {
     //     return;
     // }
     // previousComputation = thisComputation;
-
-    const votingMlWrapper = document.getElementById("voting-ml-wrapper");
-    const votingMlLink = document.getElementById("voting-ml-link");
-    if (state.C.length <= 10) {
-        // example: https://pro.voting.ml/?profile=1ABC-1CBA-1BCA
-        let url = "https://pro.voting.ml/";
-        url += "?profile=";
-        const alphabet = "ABCDEFGHIJ";
-        for (let i of state.N) {
-            url += '1' + state.profile[i].map(c => alphabet[c]).join('') + '-';
-        }
-        url = url.slice(0, -1); // remove trailing '-'
-        votingMlLink.href = url;
-        votingMlWrapper.style.display = 'block';
-    } else {
-        votingMlWrapper.style.display = 'none';
-    }
+    updateVotingMlLink();
 
     var table = document.getElementById("profile-table");
     table.replaceChildren(); // clear table
@@ -78,6 +62,7 @@ export function buildTable() {
             dataIdAttr: 'data-candidate', 
             draggable: '.candidate-chip',
             ghostClass: 'ghost-chip',
+            animation: 150,
             onChange: (evt) => { updateProfile(); },
             onStart: (evt) => { if (state.C.length > 1) { const i = evt.item.dataset.voter; document.getElementById(`voter${i}-trash`).style.display = 'inline-block'; } },
             onEnd: (evt) => { for (const trash of document.querySelectorAll('.ranking-trash')) { trash.style.display = 'none'; } },
@@ -161,5 +146,6 @@ function updateProfile() {
         }
         state.profile[i] = vote;
     }
+    updateVotingMlLink();
     calculateRules();
 }

@@ -97,6 +97,25 @@ export function deleteVoter(voter) {
     }
 }
 
+export function updateVotingMlLink() {
+    const votingMlWrapper = document.getElementById("voting-ml-wrapper");
+    const votingMlLink = document.getElementById("voting-ml-link");
+    if (state.C.length <= 10) {
+        // example: https://pro.voting.ml/?profile=1ABC-1CBA-1BCA
+        let url = "https://pro.voting.ml/";
+        url += "?profile=";
+        const alphabet = "ABCDEFGHIJ";
+        for (let i of state.N) {
+            url += '1' + state.profile[i].map(c => alphabet[c]).join('') + '-';
+        }
+        url = url.slice(0, -1); // remove trailing '-'
+        votingMlLink.href = url;
+        votingMlWrapper.style.display = 'block';
+    } else {
+        votingMlWrapper.style.display = 'none';
+    }
+}
+
 export function setInstance(N_, C_, profile_) {
     state.N = N_;
     state.C = C_;
