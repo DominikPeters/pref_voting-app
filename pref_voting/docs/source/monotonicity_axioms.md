@@ -2,15 +2,15 @@ Monotonicity Axioms
 ==========
 
 
-## One-Rank Monotonicity
+## Monotonicity
 
 ```{eval-rst}
 
 
-.. autofunction:: pref_voting.monotonicity_axioms.has_one_rank_monotonicity_violation
+.. autofunction:: pref_voting.monotonicity_axioms.has_monotonicity_violation
 
 
-.. autofunction:: pref_voting.monotonicity_axioms.find_all_one_rank_monotonicity_violations
+.. autofunction:: pref_voting.monotonicity_axioms.find_all_monotonicity_violations
 
 
 ```
