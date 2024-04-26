@@ -239,39 +239,24 @@
                             <input type="radio" name="randomize" value="single_crossing" id="single_crossing">
                             <label for="single_crossing">Single-crossing</label>
                         </li>
-                        <!-- <li>
-                            <input type="radio" name="randomize" value="Euclidean fixed-size" id="Euclidean fixed-size">
-                            <label for="Euclidean fixed-size">Euclidean fixed size</label>
+                        <li>
+                            <input type="radio" name="randomize" value="euclidean" id="euclidean">
+                            <label for="euclidean">Euclidean</label>
                             <div class="random-parameter">
-                                <input type="text" id="Euclidean fixed-size-setsize" value="3" size="4"> setsize : int -
-                                number of projects to approve
+                                <input type="text" id="euclidean-dimension" value="2" size="4"> dimension : int -
+                                dimension of the Euclidean space
                             </div>
                             <div class="random-parameter">
-                                <select id="Euclidean fixed-size-voter_prob_distribution">
-                                    <option value="1d_interval">1D Interval (uniform [0,1])</option>
-                                    <option value="1d_gaussian">1D Gaussian (0.5 &pm; 0.15)</option>
-                                    <option value="2d_square">2D Square (uniform [0,1]²)</option>
-                                    <option value="2d_disc">2D Disc (uniform, radius 1)</option>
-                                    <option value="2d_gaussian">2D Gaussian</option>
-                                    <option value="2d_gaussian_disc">2D Gaussian restricted to disc</option>
-                                </select> voter_prob_distribution : str - probability distribution of the voter points
+                                <select id="euclidean-space">
+                                    <option value="uniform_cube">Uniform cube</option>
+                                    <option value="uniform_ball">Uniform ball</option>
+                                    <option value="uniform_sphere">Uniform sphere</option>
+                                    <option value="gaussian_cube">Gaussian cube</option>
+                                    <option value="gaussian_ball">Gaussian ball</option>
+                                    <option value="unbounded_gaussian">Unbounded Gaussian</option>
+                                </select> space : str - probability distribution of the voter and candidate points
                             </div>
-                            <div class="random-parameter">
-                                <select id="Euclidean fixed-size-candidate_prob_distribution">
-                                    <option value="1d_interval">1D Interval (uniform [0,1])</option>
-                                    <option value="1d_gaussian">1D Gaussian (0.5 &pm; 0.15)</option>
-                                    <option value="2d_square">2D Square (uniform [0,1]²)</option>
-                                    <option value="2d_disc">2D Disc (uniform, radius 1)</option>
-                                    <option value="2d_gaussian">2D Gaussian</option>
-                                    <option value="2d_gaussian_disc">2D Gaussian restricted to disc</option>
-                                </select> candidate_prob_distribution : str - probability distribution of the project
-                                points
-                            </div>
-                            <span id="Euclidean fixed-size-warning"
-                                style="color: red; display: none; margin-left: 2.5em; font-size: 90%;">
-                                Error: Voter and project distributions have different dimensions.
-                            </span>
-                        </li> -->
+                        </li>
                         <li>
                             <input type="radio" name="randomize" value="plackett_luce" id="plackett_luce">
                             <label for="plackett_luce">Plackett-Luce</label>
