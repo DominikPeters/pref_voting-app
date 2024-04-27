@@ -1,9 +1,11 @@
 import { settings } from "./globalState.js";
 import { buildTable } from "./TableBuilder.js";
+import { deactivateRulesNotSupportingWeakOrders } from "./RuleSelection.js";
 
 export function turnOnWeakOrderMode() {
     document.getElementById('weak-order-mode').checked = true;
     settings.weakOrderMode = true;
+    deactivateRulesNotSupportingWeakOrders();
 }
 
 function turnOffWeakOrderMode() {

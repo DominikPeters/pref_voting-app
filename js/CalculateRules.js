@@ -68,7 +68,6 @@ export async function calculateRules() {
             profileString += JSON.stringify(rankMap).replaceAll(`"`, '') + ",";
         }
         profileString = profileString.slice(0, -1) + "]"; // remove trailing comma
-        console.log(profileString);
     } else {
         profileString = "profile = Profile([";
         for (let i of state.N) {

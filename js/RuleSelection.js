@@ -1,5 +1,13 @@
 import { rules } from './constants.js';
 
+export function deactivateRulesNotSupportingWeakOrders() {
+    for (let rule in rules) {
+        if (rules[rule].supportsWeakOrders === 0) {
+            setRuleActive(rule, false);
+        }
+    }
+}
+
 export function setRuleActive(rule, active) {
     rules[rule].active = active;
     document.getElementById('rule-choice-' + rule).checked = active;
