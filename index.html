@@ -147,13 +147,18 @@
                     </select> in table</label>
             </div>
 
+            <div class="checkbox-option">
+                <input type="checkbox" id="weak-order-mode">
+                <label for="weak-order-mode">Allow indifference / ties (weak orders)</label>
+            </div>
+
             <details id="hint-drop">
                 <summary>
                     Tip: Drop a file into this page.
                 </summary>
                 <p style="margin-top: 0.5em; margin-bottom: 0.5em;">Drop a file to import. Supported formats:</p>
                 <ul style="margin-top: 0; margin-bottom: 0; padding-left: 1em; font-size: 90%;">
-                    <li>preflib .soc</li>
+                    <li>preflib .soc/.toc</li>
                     <li>.abif</li>
                     <li>.json (<a href="https://pref-voting.readthedocs.io/en/latest/io.html">format</a>)</li>
                     <li>.csv (<a href="https://pref-voting.readthedocs.io/en/latest/io.html">format</a>)</li>
@@ -296,9 +301,16 @@
             <div class="hystmodal__wrap">
                 <div class="hystmodal__window" role="dialog" aria-modal="true">
                     <button data-hystclose class="hystmodal__close">Close</button>
-                    <strong>Preflib .soc:</strong>
-                    <pre id="soc-export"></pre>
-                    <button id="soc-export-button">Download</button><br>
+                    <div id="soc-export-container">
+                        <strong>Preflib .soc:</strong>
+                        <pre id="soc-export"></pre>
+                        <button id="soc-export-button">Download</button><br>
+                    </div>
+                    <div id="toc-export-container">
+                        <strong>Preflib .toc:</strong>
+                        <pre id="toc-export"></pre>
+                        <button id="toc-export-button">Download</button><br>
+                    </div>
                     <strong>Abif:</strong>
                     <pre id="abif-export"></pre>
                     <button id="abif-export-button">Download</button><br>

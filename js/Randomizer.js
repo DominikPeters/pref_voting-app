@@ -71,7 +71,7 @@ export async function randomize() {
                 except ValueError:
                     pass
         profile = generate_profile(num_candidates=${state.C.length}, num_voters=${state.N.length}, **prob_distribution)
-        rankings = [[int(c) for c in voter] for voter in profile.rankings]
+        rankings = [[[int(c)] for c in voter] for voter in profile.rankings]
         return_object = {'num_voters': int(profile.num_voters), 'num_cands': int(profile.num_cands), 'rankings': rankings}
         json.dumps(return_object)
     `);

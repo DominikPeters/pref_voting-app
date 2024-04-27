@@ -23,7 +23,7 @@ export function readURL() {
             console.log(stateString);
             const parsed = JSON.parse(stateString);
             let N_ = Array.from(Array(parsed.length).keys());
-            let C_ = Array.from(Array(parsed[0].length).keys());
+            let C_ = parsed[0].flat();
             let profile_ = {};
             for (let i of N_) {
                 profile_[i] = parsed[i];

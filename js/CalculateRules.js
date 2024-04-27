@@ -53,11 +53,29 @@ function _calculateRule(rule, forceIrresolute = false) {
 }
 
 export async function calculateRules() {
-    let profileString = "profile = Profile([";
-    for (let i of state.N) {
-        profileString += "[" + state.profile[i].join(",") + "],";
+    let profileString;
+    if (settings.weakOrderMode) {
+        profileString = "profile = ProfileWithTies([";
+        for (let i of state.N) {
+            // make a rank map candidate -> rank (1 is best)
+            // then JSON.stringify it
+            let rankMap = {};
+            for (let j = 0; j < state.profile[i].length; j++) {
+                for (let k of state.profile[i][j]) {
+                    rankMap[k] = j + 1;
+                }
+            }
+            profileString += JSON.stringify(rankMap).replaceAll(`"`, '') + ",";
+        }
+        profileString = profileString.slice(0, -1) + "]"; // remove trailing comma
+        console.log(profileString);
+    } else {
+        profileString = "profile = Profile([";
+        for (let i of state.N) {
+            profileString += "[" + state.profile[i].join(",") + "],";
+        }
+        profileString = profileString.slice(0, -1) + "]"; // remove trailing comma
     }
-    profileString = profileString.slice(0, -1) + "]"; // remove trailing comma
     // add cmap
     profileString += ", cmap = {";
     for (let key in state.cmap) {

@@ -21,6 +21,7 @@ function dragEndHandler(ev) {
 }
 
 const importFunctions = {
+    "toc": "preflib_to_profile(filename)",
     "soc": "preflib_to_profile(filename, as_linear_profile=True)",
     "csv": "csv_to_profile(filename, as_linear_profile=True)",
     "json": "json_to_profile(filename, as_linear_profile=True)",
@@ -49,7 +50,7 @@ filename = "profile.${extension}"
 with open(filename, "w") as f:
     f.write(filetext)
 profile = ${importFunctions[extension]}
-rankings = [[int(c) for c in voter] for voter in profile.rankings]
+rankings = profile.rankings_as_indifference_list
 return_object = {'num_voters': int(profile.num_voters), 'num_cands': int(profile.num_cands), 'rankings': rankings}
 json.dumps(return_object)
                                 `));

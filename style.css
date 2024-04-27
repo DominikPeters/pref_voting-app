@@ -1,6 +1,7 @@
 :root {
     --form-control-color: hsl(198, 100%, 28%);
     --sidebar-width: 26rem;
+    --indifference-class-gap: 10px;
 }
 
 body {
@@ -132,6 +133,10 @@ aside input[type=checkbox] {
     accent-color: hsl(198, 76%, 40%);
     width: 1.5em;
     height: 1.5em;
+}
+
+aside input[type=checkbox]:checked {
+    outline: 1px solid #cccccc55;
 }
 
 aside .checkbox-option {
@@ -304,6 +309,53 @@ td.empty-cell {
 
 .delete-icon:active svg {
     transform: scale(0.98);
+}
+
+/*             */
+/*             */
+/* Weak orders */
+/*             */
+/*             */
+/*             */
+
+.weak-order {
+    display: flex;
+    flex-direction: row;
+    margin-left: calc(-1 * var(--indifference-class-gap) + 5px);
+    margin-right: 5px;
+}
+
+.weak-order-indifference-class {
+    display: flex;
+    flex-direction: row;
+    margin-left: calc(var(--indifference-class-gap) / 2);
+    margin-right: calc(-1 * var(--indifference-class-gap) / 2);
+    transition: margin 70ms ease-in-out; /* for animation */
+}
+
+.weak-order-indifference-class:has(.weak-order-item) {
+    margin-left: var(--indifference-class-gap);
+    margin-right: 0;
+}
+
+.candidate-chip.weak-order-item {
+    user-select: none;
+    margin: 0;
+    border-radius: 0;
+}
+
+.weak-order-item:first-child {
+    border-top-left-radius: 5px;
+    border-bottom-left-radius: 5px;
+}
+
+.weak-order-item:last-child {
+    border-top-right-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.weak-order-item.weak-order-dragging {
+    background-color: antiquewhite;
 }
 
 .info-cell {

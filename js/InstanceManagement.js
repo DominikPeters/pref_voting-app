@@ -1,11 +1,12 @@
-import { state } from './globalState.js';
+import { settings, state } from './globalState.js';
 import { buildTable } from './TableBuilder.js';
+import { turnOnWeakOrderMode } from './SettingsManagement.js';
 
 export function addVoter() {
     let newVoter = state.N.slice(-1)[0] + 1;
     state.N.push(newVoter);
     for (let j of state.C) {
-        state.profile[newVoter] = [...state.C];
+        state.profile[newVoter] = state.C.map(c => [c]);
     }
     buildTable();
 }
@@ -15,7 +16,7 @@ export function addCandidate() {
     state.C.push(newCandidate);
     state.agenda.push(newCandidate);
     for (let i of state.N) {
-        state.profile[i].push(newCandidate);
+        state.profile[i].push([newCandidate]);
     }
     // add cmap if it doesn't exist
     if (!state.cmap[newCandidate]) {
@@ -39,11 +40,15 @@ export function deleteCandidate(candidate) {
         }
         state.agenda = state.agenda.map(c => (c > parseInt(candidate) ? c - 1 : c));
 
+        function removeFromIndifferenceClass(indifferenceClass, candidate) {
+            return indifferenceClass.filter(c => c !== parseInt(candidate)).map(c => (c > parseInt(candidate) ? c - 1 : c));
+        }
+
         // Update profile rankings
         for (let i of state.N) {
             state.profile[i] = state.profile[i]
-                .filter(c => c !== parseInt(candidate))
-                .map(c => (c > parseInt(candidate) ? c - 1 : c));
+                .map(indifferenceClass => removeFromIndifferenceClass(indifferenceClass, candidate))
+                .filter(indifferenceClass => indifferenceClass.length > 0);
         }
 
         // Update cmap
@@ -100,6 +105,11 @@ export function deleteVoter(voter) {
 export function updateVotingMlLink() {
     const votingMlWrapper = document.getElementById("voting-ml-wrapper");
     const votingMlLink = document.getElementById("voting-ml-link");
+    if (settings.weakOrderMode) {
+        votingMlWrapper.style.display = 'none';
+        return;
+    }
+    votingMlLink.style.display = '';
     if (state.C.length <= 10) {
         // example: https://pro.voting.ml/?profile=1ABC-1CBA-1BCA
         let url = "https://pro.voting.ml/";
@@ -116,10 +126,22 @@ export function updateVotingMlLink() {
     }
 }
 
+export function atLeastOneIndifference() {
+    for (const i of state.N) {
+        if (state.profile[i].some(ic => ic.length > 1)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 export function setInstance(N_, C_, profile_) {
     state.N = N_;
     state.C = C_;
     state.profile = profile_;
     state.agenda = [...C_];
+    if (atLeastOneIndifference()) {
+        turnOnWeakOrderMode();
+    }
     buildTable();
 }
