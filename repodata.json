@@ -1,4 +1,4 @@
-{
+'{
     "info": {
         "arch": "wasm32",
         "platform": "emscripten_3_1_27",
@@ -1061,19 +1061,6 @@
                 "packaging"
             ]
         },
-        "mip": {
-            "name": "mip",
-            "version": "1.15.0",
-            "file_name": "https://files.pythonhosted.org/packages/49/c9/d4ba71d5d73cf57596b8637ab20eda547c6cde296860f6b6192568809e70/mip-1.15.0-py3-none-any.whl",
-            "install_dir": "site",
-            "sha256": "9a48c993ddc9a48591a59e4a1221b400eb1e35fc087052085774360330bb9226",
-            "imports": [
-                "mip"
-            ],
-            "depends": [
-                "cffi"
-            ]
-        },
         "mne": {
             "name": "mne",
             "version": "1.2.3",
@@ -1503,17 +1490,16 @@
             "sha256": "eac6f3626067e0ac40b33e60ccefa1a6e7848bb75a3659cf91275a76f474f5b9",
             "imports": [],
             "depends": [
-                "mip",
                 "numpy",
                 "prefsampling"
             ]
         },
         "prefsampling": {
             "name": "prefsampling",
-            "version": "0.1.15",
-            "file_name": "https://files.pythonhosted.org/packages/64/3c/d869c321dfac442132bb633dcbff6b939de456f5a513691424e889355dbd/prefsampling-0.1.15-py3-none-any.whl",
+            "version": "0.1.18",
+            "file_name": "https://files.pythonhosted.org/packages/27/6e/ecb174cafe36622d525f1a62b07ff9b542fb3659652a74f787b3c8070004/prefsampling-0.1.18-py3-none-any.whl",
             "install_dir": "site",
-            "sha256": "4ff28b32830de6d45f295fbbaf75e22f73b261ce6886def7da41259a29bceb0e",
+            "sha256": "55fe4bec96749a8cefbfabf7eb979cf8c5225974060c5ad7a47ff3ef44f64998",
             "imports": [],
             "depends": [
                 "numpy"
@@ -2629,4 +2615,4 @@
             "sha256": "8c3b9d2df2e0b45028b3ce9aedcf7f2a5b230aa2e6c017099b4a44c0aca9cff5"
         }
     }
-}
+}'
