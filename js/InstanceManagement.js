@@ -30,9 +30,13 @@ export function deleteCandidate(candidate) {
     const oldNumCandidates = state.C.length;
     if (candidateIndex !== -1) {
         state.agenda = state.agenda.filter(c => c !== parseInt(candidate));
-
+        
         const deletedCandidateName = state.cmap[parseInt(candidate)];
         state.C.splice(candidateIndex, 1);
+
+        const deletedColor = settings.colors[parseInt(candidate)];
+        settings.colors.splice(parseInt(candidate), 1);
+        settings.colors.splice(state.C.length, 0, deletedColor);
 
         // Renumber candidates greater than the deleted candidate
         for (let i = candidateIndex; i < state.C.length; i++) {

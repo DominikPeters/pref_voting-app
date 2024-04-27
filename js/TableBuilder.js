@@ -1,5 +1,5 @@
 import { settings, state } from './globalState.js';
-import { rules, deleteIconHTML, colors } from './constants.js';
+import { rules, deleteIconHTML } from './constants.js';
 import { calculateRules } from './CalculateRules.js';
 import { deleteCandidate, deleteVoter, toggleAgenda, updateVotingMlLink } from './InstanceManagement.js';
 import Sortable from '../imports/sortable.core.esm.min.js';
@@ -50,7 +50,7 @@ export function buildTable() {
                 chip.dataset.candidate = j;
                 chip.dataset.voter = i;
                 chip.className = "candidate-chip";
-                chip.style.backgroundColor = colors[j];
+                chip.style.backgroundColor = settings.colors[j];
                 chip.innerHTML = state.cmap[j] || j;
                 if (!state.agenda.includes(j)) {
                     chip.classList.add("not-agenda");

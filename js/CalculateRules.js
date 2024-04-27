@@ -1,5 +1,5 @@
 import { settings, state } from './globalState.js';
-import { rules, properties, colors } from './constants.js';
+import { rules, properties } from './constants.js';
 
 function computeTiedCommittees() {
     let rule = document.getElementById("compute-tied-committees-button").dataset.rule;
@@ -101,7 +101,7 @@ export async function calculateRules() {
             for (let j of result) {
                 var chip = document.createElement("div");
                 chip.className = "candidate-chip";
-                chip.style.backgroundColor = colors[j];
+                chip.style.backgroundColor = settings.colors[j];
                 chip.innerHTML = state.cmap[j] || j;
                 chip.dataset.rule = rule;
                 chip.dataset.candidate = j;
