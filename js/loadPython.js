@@ -4,11 +4,13 @@ export async function loadPython() {
     document.getElementById("loading-container").style.display = "block";
     let loading = document.getElementById("loading-indicator");
     loading.innerHTML = "Loading... (20%)";
-    window.pyodide = await loadPyodide({lockFileURL: "repodata.json"});
+    // window.pyodide = await loadPyodide({lockFileURL: "repodata.json"});
+    window.pyodide = await loadPyodide();
     loading.innerHTML = "Loading... (30%)";
     await window.pyodide.loadPackage("micropip");
     const micropip = window.pyodide.pyimport("micropip");
     window.micropip = micropip;
+    await micropip.add_mock_package("mip", "2.0.0");
     loading.innerHTML = "Loading... (40%)";
     await micropip.install("numpy", true);
     loading.innerHTML = "Loading... (50%)";
@@ -17,8 +19,8 @@ export async function loadPython() {
     await micropip.install("matplotlib", true);
     await micropip.install("tabulate", true);
     loading.innerHTML = "Loading... (70%)";
+    await micropip.install("preflibtools");
     await micropip.install("prefsampling", true);
-    await micropip.install("preflibtools", true);
     await window.pyodide.runPython(`
         import js
         import json
