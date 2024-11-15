@@ -115,14 +115,38 @@ export function updateVotingMlLink() {
     }
     votingMlLink.style.display = '';
     if (state.C.length <= 10) {
-        // example: https://pro.voting.ml/?profile=1ABC-1CBA-1BCA
-        let url = "https://pro.voting.ml/";
-        url += "?profile=";
         const alphabet = "ABCDEFGHIJ";
+        let url = "https://pro.voting.ml/?profile=";
+        
+        // Group sequential voters with identical preferences
+        let currentPreference = null;
+        let currentCount = 0;
+        let groups = [];
+        
         for (let i of state.N) {
-            url += '1' + state.profile[i].map(c => alphabet[c]).join('') + '-';
+            // Convert current voter's preference to string representation
+            const prefString = state.profile[i].map(c => alphabet[c]).join('');
+            
+            if (currentPreference === null) {
+                // First voter
+                currentPreference = prefString;
+                currentCount = 1;
+            } else if (prefString === currentPreference) {
+                // Same preference as previous voter
+                currentCount++;
+            } else {
+                // Different preference, store the group and start new one
+                groups.push(`${currentCount}${currentPreference}`);
+                currentPreference = prefString;
+                currentCount = 1;
+            }
         }
-        url = url.slice(0, -1); // remove trailing '-'
+        // Add the last group
+        if (currentCount > 0) {
+            groups.push(`${currentCount}${currentPreference}`);
+        }
+        
+        url += groups.join('-');
         votingMlLink.href = url;
         votingMlWrapper.style.display = 'block';
     } else {
