@@ -1,12 +1,45 @@
+// Axiom definitions for single-winner voting
+export const axioms = {
+    "condorcet_winner": {
+        fullName: "Condorcet Winner Criterion",
+        shortName: "Condorcet",
+        description: "If a candidate beats all others head-to-head, they must win.",
+        checkCommand: "condorcet_winner.has_violation(profile, vm)"
+    },
+    "condorcet_loser": {
+        fullName: "Condorcet Loser Criterion",
+        shortName: "No CL",
+        description: "A candidate who loses to all others head-to-head must not win.",
+        checkCommand: "condorcet_loser.has_violation(profile, vm)"
+    },
+    "majority": {
+        fullName: "Majority Criterion",
+        shortName: "Majority",
+        description: "A candidate with a majority of first-place votes must win.",
+        checkCommand: "majority_winner.has_violation(profile, vm)"
+    },
+    "pareto": {
+        fullName: "Pareto Criterion",
+        shortName: "Pareto",
+        description: "A Pareto-dominated candidate must not win.",
+        checkCommand: "pareto.has_violation(profile, vm)"
+    },
+    "smith": {
+        fullName: "Smith Criterion",
+        shortName: "Smith",
+        description: "The winner must be in the Smith set.",
+        checkCommand: "smith.has_violation(profile, vm)"
+    },
+    "monotonicity": {
+        fullName: "Monotonicity",
+        shortName: "Mono",
+        description: "Ranking a winner higher should not cause them to lose.",
+        checkCommand: "monotonicity.has_violation(profile, vm)"
+    },
+}
+
+// Legacy properties object for backwards compatibility
 export const properties = {
-    // "pareto": { fullName: "Pareto optimality", shortName: "Pareto" },
-    // "jr": { fullName: "Justified Representation (JR)", shortName: "JR" },
-    // "pjr": { fullName: "Proportional Justified Representation (PJR)", shortName: "PJR" },
-    // "ejr": { fullName: "Extended Justified Representation (EJR)", shortName: "EJR" },
-    // "ejr+": { fullName: "EJR+ without cohesiveness", shortName: "EJR+" },
-    // "fjr": { fullName: "Full Justified Representation (FJR)", shortName: "FJR" },
-    // "priceability": { fullName: "Priceability" },
-    // "core": { fullName: "Core", shortName: "Core" },
 }
 
 export const rules = {
@@ -489,6 +522,160 @@ export const rules = {
         "command": "superior_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
         "active": 0
+    },
+    "majority": {
+        "fullName": "Majority Winner",
+        "shortName": "Majority",
+        "category": "Other Methods",
+        "description": "Returns the candidate with a strict majority of first-place votes, if one exists. Otherwise returns an empty set.",
+        "command": "majority(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    "pareto": {
+        "fullName": "Pareto Undominated",
+        "shortName": "Pareto",
+        "category": "Other Methods",
+        "description": "Returns all candidates that are not Pareto dominated by another candidate. Candidate A Pareto dominates B if every voter ranks A at least as high as B, and at least one voter ranks A strictly higher.",
+        "command": "pareto(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    "dowdall": {
+        "fullName": "Dowdall (Nauru)",
+        "shortName": "Dowdall",
+        "category": "Positional Scoring Rules",
+        "description": "Harmonic scoring: 1st place gets 1 point, 2nd place gets 1/2, 3rd place gets 1/3, etc. Used in Nauru.",
+        "command": "dowdall(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    "tideman_alternative_smith": {
+        "fullName": "Tideman Alternative (Smith)",
+        "shortName": "Tideman Alt Smith",
+        "category": "Iterative Methods",
+        "description": "After restricting to the Smith set, iteratively eliminate the candidate with fewest first-place votes until one remains.",
+        "command": "tideman_alternative_smith(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    "tideman_alternative_schwartz": {
+        "fullName": "Tideman Alternative (Schwartz)",
+        "shortName": "Tideman Alt Schwartz",
+        "category": "Iterative Methods",
+        "description": "After restricting to the Schwartz set, iteratively eliminate the candidate with fewest first-place votes until one remains.",
+        "command": "tideman_alternative_schwartz(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    "essential_set": {
+        "fullName": "Essential Set",
+        "shortName": "Essential Set",
+        "category": "Margin Methods",
+        "description": "The support of the C1 maximal lottery. This is the set of candidates that have positive probability in the maximal lottery.",
+        "command": "essential_set(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 0
+    },
+    "weighted_covering": {
+        "fullName": "Weighted Covering",
+        "shortName": "Weighted Covering",
+        "category": "Margin Methods",
+        "description": "Candidate A defeats B if margin(A,B) > 0 and A doesn't lose to any candidate more than B does.",
+        "command": "weighted_covering(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 0
+    },
+    "borda_minimax_faceoff": {
+        "fullName": "Borda-Minimax Faceoff",
+        "shortName": "Borda-Minimax",
+        "category": "Combined Methods",
+        "description": "If Borda and Minimax agree on a winner, return that winner. Otherwise, hold a head-to-head runoff between the Borda winner and the Minimax winner.",
+        "command": "borda_minimax_faceoff(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0
+    },
+    // Social Welfare Functions - return rankings instead of just winners
+    "plurality_ranking": {
+        "fullName": "Plurality Ranking",
+        "shortName": "Plurality Ranking",
+        "category": "Social Welfare Functions",
+        "description": "Rank candidates by their plurality (first-place) scores.",
+        "command": "plurality_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0,
+        "resultType": "ranking"
+    },
+    "borda_ranking": {
+        "fullName": "Borda Ranking",
+        "shortName": "Borda Ranking",
+        "category": "Social Welfare Functions",
+        "description": "Rank candidates by their Borda scores.",
+        "command": "borda_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0,
+        "resultType": "ranking"
+    },
+    "copeland_ranking": {
+        "fullName": "Copeland Ranking",
+        "shortName": "Copeland Ranking",
+        "category": "Social Welfare Functions",
+        "description": "Rank candidates by their Copeland scores (wins minus losses).",
+        "command": "copeland_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 0,
+        "resultType": "ranking"
+    },
+    "kemeny_young_ranking": {
+        "fullName": "Kemeny-Young Ranking",
+        "shortName": "K-Y Ranking",
+        "category": "Social Welfare Functions",
+        "description": "Find the ranking(s) that minimize the sum of Kendall tau distances to all voters' rankings.",
+        "command": "kemeny_young_rankings(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0,
+        "resultType": "ranking"
+    },
+    // Probabilistic Methods - return probability distributions
+    "random_dictator": {
+        "fullName": "Random Dictator",
+        "shortName": "Random Dictator",
+        "category": "Probabilistic Methods",
+        "description": "Each candidate's winning probability is proportional to their plurality score.",
+        "command": "random_dictator(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0,
+        "resultType": "probability"
+    },
+    "proportional_borda": {
+        "fullName": "Proportional Borda",
+        "shortName": "Prop. Borda",
+        "category": "Probabilistic Methods",
+        "description": "Each candidate's winning probability is proportional to their Borda score.",
+        "command": "pr_borda(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 0,
+        "resultType": "probability"
+    },
+    "maximal_lottery": {
+        "fullName": "Maximal Lottery",
+        "shortName": "Maximal Lottery",
+        "category": "Probabilistic Methods",
+        "description": "The unique lottery that is not dominated by any other lottery in the majority comparison game.",
+        "command": "maximal_lottery(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 0,
+        "resultType": "probability"
+    },
+    "c1_maximal_lottery": {
+        "fullName": "C1 Maximal Lottery",
+        "shortName": "C1 Max Lottery",
+        "category": "Probabilistic Methods",
+        "description": "The maximal lottery in the normalized majority graph (each edge has weight 1 or -1).",
+        "command": "c1_maximal_lottery(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 0,
+        "resultType": "probability"
     }
 }
 

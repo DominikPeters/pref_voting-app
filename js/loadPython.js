@@ -37,12 +37,30 @@ export async function loadPython() {
     `);
     await window.pyodide.runPython(`
         from pref_voting.profiles import Profile
-        from pref_voting.scoring_methods import plurality, borda, anti_plurality
+        from pref_voting.profiles_with_ties import ProfileWithTies
+        from pref_voting.scoring_methods import plurality, borda, anti_plurality, dowdall
         from pref_voting.iterative_methods import *
         from pref_voting.c1_methods import *
         from pref_voting.margin_based_methods import *
         from pref_voting.combined_methods import *
         from pref_voting.other_methods import *
+        from pref_voting.scoring_methods import plurality_ranking, borda_ranking
+        from pref_voting.c1_methods import copeland_ranking
+        from pref_voting.probabilistic_methods import (
+            random_dictator, pr_borda, maximal_lottery, c1_maximal_lottery
+        )
+        # Axiom imports
+        from pref_voting.dominance_axioms import (
+            pareto, condorcet_winner, condorcet_loser, smith, schwartz
+        )
+        from pref_voting.monotonicity_axioms import monotonicity
+
+        # Helper function to get Kemeny-Young ranking(s)
+        def kemeny_young_rankings(profile, curr_cands=None):
+            """Return Kemeny-Young ranking(s) as a list of rankings."""
+            from pref_voting.other_methods import kemeny_young_ranking as ky_ranking
+            result = ky_ranking(profile, curr_cands=curr_cands)
+            return result
     `);
     // enable all buttons and inputs
     document.querySelectorAll("button, input").forEach(function (el) {

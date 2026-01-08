@@ -41,15 +41,53 @@ function populateCommitteeInfoModal(rule) {
 }
 
 function _calculateRule(rule, forceIrresolute = false) {
-    let result;
-    result = window.pyodide.runPython(`
-        results = ${rules[rule].command}
-        if results is None:
-            results = []
-        results = [int(x) for x in results]
-        json.dumps(results)
-    `);
-    return JSON.parse(result);
+    const resultType = rules[rule].resultType || "winners";
+
+    if (resultType === "probability") {
+        // Handle probabilistic methods - return dict of candidate -> probability
+        let result = window.pyodide.runPython(`
+            prob_result = ${rules[rule].command}
+            if prob_result is None:
+                prob_result = {}
+            # Convert to dict with int keys and float values
+            prob_dict = {int(k): float(v) for k, v in prob_result.items()}
+            json.dumps(prob_dict)
+        `);
+        return { type: "probability", data: JSON.parse(result) };
+    } else if (resultType === "ranking") {
+        // Handle social welfare functions - return ranking
+        let result = window.pyodide.runPython(`
+            ranking_result = ${rules[rule].command}
+            if ranking_result is None:
+                ranking_list = []
+            else:
+                # Ranking object has .ranking property which is list of lists (with ties)
+                if hasattr(ranking_result, 'ranking'):
+                    ranking_list = [[int(c) for c in tier] for tier in ranking_result.ranking]
+                elif hasattr(ranking_result, 'ranks'):
+                    # Build ranking from ranks dict
+                    from collections import defaultdict
+                    tiers = defaultdict(list)
+                    for c, r in ranking_result.ranks.items():
+                        tiers[r].append(int(c))
+                    ranking_list = [tiers[r] for r in sorted(tiers.keys())]
+                else:
+                    # Assume it's already a list of lists
+                    ranking_list = [[int(c) for c in tier] if hasattr(tier, '__iter__') else [int(tier)] for tier in ranking_result]
+            json.dumps(ranking_list)
+        `);
+        return { type: "ranking", data: JSON.parse(result) };
+    } else {
+        // Standard winner set
+        let result = window.pyodide.runPython(`
+            results = ${rules[rule].command}
+            if results is None:
+                results = []
+            results = [int(x) for x in results]
+            json.dumps(results)
+        `);
+        return JSON.parse(result);
+    }
 }
 
 export async function calculateRules() {
@@ -98,14 +136,67 @@ export async function calculateRules() {
             state.storedCommittee[rule] = result;
             let cell = document.getElementById("rule-" + rule + "-results");
             cell.innerHTML = "";
-            for (let j of result) {
-                var chip = document.createElement("div");
-                chip.className = "candidate-chip";
-                chip.style.backgroundColor = settings.colors[j];
-                chip.innerHTML = state.cmap[j] || j;
-                chip.dataset.rule = rule;
-                chip.dataset.candidate = j;
-                cell.appendChild(chip);
+
+            // Handle different result types
+            if (result && result.type === "probability") {
+                // Probabilistic method - display as bar chart style
+                const probData = result.data;
+                const sortedCands = Object.keys(probData).sort((a, b) => probData[b] - probData[a]);
+                for (let j of sortedCands) {
+                    const prob = probData[j];
+                    if (prob > 0.001) {  // Only show non-negligible probabilities
+                        var chip = document.createElement("div");
+                        chip.className = "candidate-chip probability-chip";
+                        chip.style.backgroundColor = settings.colors[j];
+                        const percent = (prob * 100).toFixed(1);
+                        chip.innerHTML = `${state.cmap[j] || j}: ${percent}%`;
+                        chip.dataset.rule = rule;
+                        chip.dataset.candidate = j;
+                        chip.title = `${state.cmap[j] || j}: ${(prob * 100).toFixed(2)}%`;
+                        cell.appendChild(chip);
+                    }
+                }
+            } else if (result && result.type === "ranking") {
+                // Social welfare function - display as ranking with > and =
+                const ranking = result.data;
+                for (let tierIdx = 0; tierIdx < ranking.length; tierIdx++) {
+                    const tier = ranking[tierIdx];
+                    for (let i = 0; i < tier.length; i++) {
+                        const j = tier[i];
+                        var chip = document.createElement("div");
+                        chip.className = "candidate-chip";
+                        chip.style.backgroundColor = settings.colors[j];
+                        chip.innerHTML = state.cmap[j] || j;
+                        chip.dataset.rule = rule;
+                        chip.dataset.candidate = j;
+                        cell.appendChild(chip);
+                        // Add "=" between tied candidates
+                        if (i < tier.length - 1) {
+                            var eq = document.createElement("span");
+                            eq.className = "ranking-separator";
+                            eq.innerHTML = " = ";
+                            cell.appendChild(eq);
+                        }
+                    }
+                    // Add ">" between tiers
+                    if (tierIdx < ranking.length - 1) {
+                        var gt = document.createElement("span");
+                        gt.className = "ranking-separator";
+                        gt.innerHTML = " > ";
+                        cell.appendChild(gt);
+                    }
+                }
+            } else {
+                // Standard winner set
+                for (let j of result) {
+                    var chip = document.createElement("div");
+                    chip.className = "candidate-chip";
+                    chip.style.backgroundColor = settings.colors[j];
+                    chip.innerHTML = state.cmap[j] || j;
+                    chip.dataset.rule = rule;
+                    chip.dataset.candidate = j;
+                    cell.appendChild(chip);
+                }
             }
             let row = document.getElementById("rule-" + rule + "-row");
             // row.dataset.hystmodal = "#committee-info-modal";

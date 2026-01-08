@@ -2,15 +2,59 @@
 
 This document outlines opportunities to enhance the voting app to better utilize the powerful pref_voting library.
 
+## Implementation Status
+
+### Completed Features (January 2025)
+
+1. **New Voting Methods Added** (13 new methods)
+   - Dowdall (Nauru) - harmonic scoring
+   - Majority Winner - strict majority criterion
+   - Pareto Undominated - Pareto optimal candidates
+   - Tideman Alternative (Smith) - Smith set + IRV elimination
+   - Tideman Alternative (Schwartz) - Schwartz set + IRV elimination
+   - Essential Set - C1 maximal lottery support
+   - Weighted Covering - weighted covering relation
+   - Borda-Minimax Faceoff - combined method
+
+2. **Social Welfare Functions** (4 methods - return full rankings)
+   - Plurality Ranking
+   - Borda Ranking
+   - Copeland Ranking
+   - Kemeny-Young Ranking
+   - Rankings displayed with ">" between tiers and "=" for ties
+
+3. **Probabilistic Methods** (4 methods - return probability distributions)
+   - Random Dictator
+   - Proportional Borda
+   - Maximal Lottery
+   - C1 Maximal Lottery
+   - Results displayed as percentages per candidate
+
+4. **Axiom Checking System**
+   - Condorcet Winner Criterion
+   - Condorcet Loser Criterion
+   - Majority Criterion
+   - Pareto Criterion
+   - Smith Criterion
+   - Monotonicity
+   - Check axioms for any voting rule on current profile
+
+5. **Analysis Features**
+   - Profile Analysis Panel (scores, Condorcet winner/loser, cycle detection)
+   - Method Disagreement Finder (find profiles where rules disagree)
+   - Load disagreeing profiles directly into the app
+
+---
+
 ## Executive Summary
 
 The pref_voting library has grown significantly more powerful than what the app currently uses:
-- **Library has 80+ voting methods** vs **53 in the app**
-- **4 additional profile types** (Grade, Utility, Spatial) not supported
-- **23 axioms** for checking voting rule properties (currently disabled)
+- **Library has 80+ voting methods** vs **~65 in the app** (was 53, now expanded)
+- **4 additional profile types** (Grade, Utility, Spatial) - not yet supported
+- **23 axioms** for checking voting rule properties - **6 now implemented**
 - **Advanced profile generators** including spatial and utility-based
-- **Social Welfare Functions** that return rankings (not just winners)
-- **Probabilistic methods** that return probability distributions
+- **Social Welfare Functions** - **now implemented**
+- **Probabilistic methods** - **now implemented**
 
 ---
 

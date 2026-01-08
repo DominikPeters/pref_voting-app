@@ -438,6 +438,63 @@ button.active {
     color: #999;
 }
 
+/* Probability method results (wider chips with percentages) */
+.candidate-chip.probability-chip {
+    width: auto;
+    min-width: 4em;
+    padding-left: 6px;
+    padding-right: 6px;
+    font-size: 11px;
+}
+
+/* Ranking separator (> and =) */
+.ranking-separator {
+    display: inline-block;
+    color: #666;
+    font-weight: bold;
+    font-size: 14px;
+    margin: 0 2px;
+    vertical-align: middle;
+}
+
+/* Axiom check results */
+.axiom-satisfied {
+    color: #2e7d32;
+}
+
+.axiom-violated {
+    color: #c62828;
+}
+
+.axiom-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.axiom-list li {
+    padding: 4px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.axiom-list li:last-child {
+    border-bottom: none;
+}
+
+/* Analysis panel styling */
+.analysis-panel {
+    background: #f5f5f5;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+}
+
+.analysis-panel h3 {
+    margin-top: 0;
+    font-size: 14px;
+    color: #333;
+}
+
 /************************
     * Modal styling
 ************************/
