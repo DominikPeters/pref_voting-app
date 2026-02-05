@@ -1,41 +1,141 @@
 import { settings, state } from './globalState.js';
-import { rules, properties } from './constants.js';
+import { rules } from './constants.js';
 
-function computeTiedCommittees() {
-    let rule = document.getElementById("compute-tied-committees-button").dataset.rule;
-    let result = _calculateRule(rule, true)[0];
-    let pre = document.getElementById("committee-info-modal-all-committees");
-    pre.innerHTML = "";
-    pre.innerHTML = result.map(committee => committee.join(",")).join("\n");
+function vmNameForRule(rule) {
+    // Use canonical VM objects for axioms if the displayed rule uses a guarded wrapper.
+    if (rule === "ranked_pairs") return "ranked_pairs";
+    if (rule === "river") return "river";
+    return rules[rule].command.split("(")[0];
+}
+
+function ensureAxiomRegistry() {
+    if (!state.axiomRegistry) {
+        state.axiomRegistry = JSON.parse(window.pyodide.runPython(`_pv_axiom_registry_json()`));
+    }
+}
+
+function checkAxiom(rule, axiomKey, includeDetails = true) {
+    const vmName = vmNameForRule(rule);
+    const result = window.pyodide.runPython(`
+        _pv_check_axiom_json(${JSON.stringify(axiomKey)}, ${JSON.stringify(vmName)}, ${includeDetails ? "True" : "False"})
+    `);
+    return JSON.parse(result);
+}
+
+function createAxiomRow(container, axiom) {
+    const row = document.createElement("div");
+    row.className = "axiom-row";
+    row.dataset.axiomKey = axiom.key;
+    row.dataset.heavy = axiom.heavy ? "1" : "0";
+
+    const summary = document.createElement("div");
+    summary.className = "axiom-line";
+    if (axiom.heavy) {
+        summary.innerText = `${axiom.fullName}: ⏳ pending (slow)`;
+    } else {
+        summary.innerText = `${axiom.fullName}: ⏳ computing`;
+    }
+    row.appendChild(summary);
+
+    const detailsHost = document.createElement("div");
+    detailsHost.className = "axiom-details-host";
+    row.appendChild(detailsHost);
+
+    container.appendChild(row);
+    return row;
+}
+
+function renderAxiomResult(row, axiom, result) {
+    const summary = row.querySelector(".axiom-line");
+    const detailsHost = row.querySelector(".axiom-details-host");
+
+    summary.classList.remove("satisfied", "failed", "na");
+    if (!result.applicable) {
+        summary.classList.add("na");
+        summary.innerText = `${axiom.fullName}: ? not applicable`;
+    } else if (result.satisfied) {
+        summary.classList.add("satisfied");
+        summary.innerText = `${axiom.fullName}: ✓ satisfied`;
+    } else {
+        summary.classList.add("failed");
+        summary.innerText = `${axiom.fullName}: ✗ failed`;
+    }
+
+    detailsHost.innerHTML = "";
+    const detailText = result.error || result.details;
+    if (detailText) {
+        const details = document.createElement("details");
+        const detailSummary = document.createElement("summary");
+        detailSummary.innerText = "Details";
+        const pre = document.createElement("pre");
+        pre.innerText = detailText;
+        details.appendChild(detailSummary);
+        details.appendChild(pre);
+        detailsHost.appendChild(details);
+    }
+}
+
+function getAxiomByKey(axiomKey) {
+    ensureAxiomRegistry();
+    return state.axiomRegistry.find(a => a.key === axiomKey) || { key: axiomKey, shortName: axiomKey, fullName: axiomKey };
+}
+
+function renderPropertyCell(rule, axiomKey) {
+    const cell = document.getElementById("rule-" + rule + "-property-cell");
+    if (!cell) {
+        return;
+    }
+    cell.innerHTML = "";
+    const axiom = getAxiomByKey(axiomKey);
+    const result = checkAxiom(rule, axiomKey, false);
+    const span = document.createElement("span");
+    if (!result.applicable) {
+        span.classList.add("property-cell-na");
+        span.innerText = "? " + axiom.shortName;
+        span.title = result.error || "Not applicable";
+    } else if (result.satisfied) {
+        span.classList.add("property-cell-satisfied");
+        span.innerText = "✓ " + axiom.shortName;
+    } else {
+        span.classList.add("property-cell-failed");
+        span.innerText = "✗ " + axiom.shortName;
+    }
+    cell.appendChild(span);
 }
 
 function populateCommitteeInfoModal(rule) {
-    document.getElementById("compute-tied-committees-button").dataset.rule = rule;
-    document.getElementById("compute-tied-committees-button").addEventListener("click", computeTiedCommittees);
-    let pre = document.getElementById("committee-info-modal-all-committees");
-    pre.innerHTML = "";
-    // compute properties
-    setTimeout(() => {
-        let propList = document.getElementById("committee-info-modal-properties-list");
-        propList.innerHTML = "";
-        for (let prop in properties) {
-            let result = window.pyodide.runPython(`
-                properties.check("${prop}", profile, ${JSON.stringify(state.storedCommittee[rule])})
-            `);
-            let details = document.createElement("details");
-            let summary = document.createElement("summary");
-            if (result) {
-                summary.classList.add("satisfied");
-                summary.innerHTML = properties[prop].fullName + ": ✓ satisfied";
-            } else {
-                summary.classList.add("failed");
-                summary.innerHTML = properties[prop].fullName + ": ✗ failed";
+    ensureAxiomRegistry();
+    const list = document.getElementById("committee-info-modal-properties-list");
+    list.innerHTML = "";
+
+    const rowsByKey = {};
+    for (let axiom of state.axiomRegistry) {
+        rowsByKey[axiom.key] = createAxiomRow(list, axiom);
+    }
+
+    const button = document.getElementById("compute-heavy-axioms-button");
+    button.dataset.rule = rule;
+    button.disabled = false;
+    button.innerText = "compute";
+    button.onclick = () => {
+        button.disabled = true;
+        button.innerText = "computing...";
+        setTimeout(() => {
+            const heavyAxioms = state.axiomRegistry.filter(a => a.heavy);
+            for (let axiom of heavyAxioms) {
+                const result = checkAxiom(rule, axiom.key);
+                renderAxiomResult(rowsByKey[axiom.key], axiom, result);
             }
-            details.appendChild(summary);
-            let pre = document.createElement("pre");
-            // pre.innerHTML = info.join("\n");
-            details.appendChild(pre);
-            propList.appendChild(details);
+            button.innerText = "recompute";
+            button.disabled = false;
+        }, 0);
+    };
+
+    setTimeout(() => {
+        const cheapAxioms = state.axiomRegistry.filter(a => !a.heavy);
+        for (let axiom of cheapAxioms) {
+            const result = checkAxiom(rule, axiom.key);
+            renderAxiomResult(rowsByKey[axiom.key], axiom, result);
         }
     }, 0);
 }
@@ -108,28 +208,19 @@ export async function calculateRules() {
                 cell.appendChild(chip);
             }
             let row = document.getElementById("rule-" + rule + "-row");
-            // row.dataset.hystmodal = "#committee-info-modal";
-            // row.onclick = function () {
-            //     populateCommitteeInfoModal(rule);
-            // };
+            row.dataset.hystmodal = "#committee-info-modal";
+            row.onclick = function () {
+                populateCommitteeInfoModal(rule);
+            };
             if (settings.showPropertyinTable) {
                 setTimeout(() => {
-                    let cell = document.getElementById("rule-" + rule + "-property-cell");
-                    let result = window.pyodide.runPython(`
-                        properties.check("${settings.showPropertyinTable}", profile, ${JSON.stringify(state.storedCommittee[rule])})
-                    `);
-                    if (result) {
-                        let span = document.createElement("span");
-                        span.classList.add("property-cell-satisfied");
-                        span.innerHTML = "✓ " + properties[settings.showPropertyinTable].shortName;
-                        cell.appendChild(span);
-                    } else {
-                        let span = document.createElement("span");
-                        span.classList.add("property-cell-failed");
-                        span.innerHTML = "✗ " + properties[settings.showPropertyinTable].shortName;
-                        cell.appendChild(span);
-                    }
+                    renderPropertyCell(rule, settings.showPropertyinTable);
                 }, 0);
+            } else {
+                const cell = document.getElementById("rule-" + rule + "-property-cell");
+                if (cell) {
+                    cell.innerHTML = "";
+                }
             }
         }, 0);
     }

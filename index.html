@@ -131,19 +131,13 @@
                     </svg>
                     Export</button>
             </div>
-            <div class="checkbox-option" style="display: none;">
+            <div class="checkbox-option">
                 <input type="checkbox" id="showPropertyinTable">
                 <label for="showPropertyinTable">Show
-                    property
+                    axiom
                     <select id="propertyToShow"
-                        style="width: 5em; font-size: 98%; background-color: transparent; color: white;">
-                        <option value="pareto">Pareto</option>
-                        <option value="core">Core</option>
-                        <option value="fjr">FJR</option>
-                        <option value="ejr+">EJR+</option>
-                        <option value="ejr">EJR</option>
-                        <option value="pjr">PJR</option>
-                        <option value="jr">JR</option>
+                        style="width: 12em; font-size: 98%; background-color: transparent; color: white;">
+                        <option value="">Loading...</option>
                     </select> in table</label>
             </div>
 
@@ -178,7 +172,7 @@
                 Uses the <a href="https://github.com/voting-tools/pref_voting">pref_voting</a> library by
                 Eric Pacuit and Wes Holliday.<br>
                 <a href="https://github.com/DominikPeters/pref_voting-app">Web version</a> by <a href="https://dominik-peters.de">Dominik Peters</a>
-                &middot; updated April 2024
+                &middot; updated February 2026
             </p>
         </aside>
 
@@ -297,10 +291,11 @@
             <div class="hystmodal__wrap">
                 <div class="hystmodal__window" role="dialog" aria-modal="true">
                     <button data-hystclose class="hystmodal__close">Close</button>
-                    <strong>Properties:</strong>
+                    <div>
+                        <button id="compute-heavy-axioms-button">Compute slow axioms</button> (can be slow)
+                    </div>
+                    <strong>Axiom checks:</strong>
                     <div id="committee-info-modal-properties-list"></div>
-                    <strong>Tied winning committees: <button id="compute-tied-committees-button">compute</button> (can be slow)</strong>
-                    <pre id="committee-info-modal-all-committees"></pre>
                 </div>
             </div>
         </div>
