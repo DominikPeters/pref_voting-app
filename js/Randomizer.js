@@ -34,18 +34,9 @@ export function populateRandomizerModal(attachListeners=false) {
         if (alphas.length !== state.C.length) {
             document.getElementById("plackett_luce-alphas").value = Array(state.C.length).fill(1).join(",");
         }
-        // if (radio.checked) {
-        //     // Check Euclidean integrity
-        //     document.getElementById("Euclidean fixed-size-warning").style.display = "none";
-        //     if (radio.value == "Euclidean fixed-size" &&
-        //         document.getElementById("Euclidean fixed-size-voter_prob_distribution").value.includes("1d") != document.getElementById("Euclidean fixed-size-candidate_prob_distribution").value.includes("1d")) {
-        //         randomizer["voter_prob_distribution"] = "1d_interval";
-        //         randomizer["candidate_prob_distribution"] = "1d_interval";
-        //         document.getElementById("Euclidean fixed-size-warning").style.display = "block";
-        //     }
-        //     // Set randomizer
-        //     settings.randomizer = randomizer;
-        // }
+        if (radio.checked) {
+            settings.randomizer = randomizer;
+        }
         if (attachListeners) {
             radio.addEventListener('change', function () {
                 populateRandomizerModal();
@@ -58,16 +49,28 @@ export async function randomize() {
     let result = window.pyodide.runPython(`
         from pref_voting.generate_profiles import generate_profile
         prob_distribution = ${JSON.stringify(settings.randomizer)}
-        # go through fields in prob_distribution and replace strings with floats or ints if possible
+        # convert serialized form values to expected Python types
         for field in prob_distribution:
-            if "distribution" in field:
-                prob_distribution[field] = PointProbabilityDistribution(prob_distribution[field])
+            value = prob_distribution[field]
+
+            # bool values from HTML selects
+            if value == "True":
+                prob_distribution[field] = True
                 continue
-            if "." in prob_distribution[field]:
-                prob_distribution[field] = float(prob_distribution[field])
-            else:
+            if value == "False":
+                prob_distribution[field] = False
+                continue
+
+            # list-valued parameters currently used by randomizer UI
+            if field == "alphas" and isinstance(value, str):
+                prob_distribution[field] = [float(x.strip()) for x in value.split(",") if x.strip() != ""]
+                continue
+
+            if isinstance(value, str) and "." in value:
+                prob_distribution[field] = float(value)
+            elif isinstance(value, str):
                 try:
-                    prob_distribution[field] = int(prob_distribution[field])
+                    prob_distribution[field] = int(value)
                 except ValueError:
                     pass
         profile = generate_profile(num_candidates=${state.C.length}, num_voters=${state.N.length}, **prob_distribution)

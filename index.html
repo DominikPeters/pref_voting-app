@@ -279,6 +279,14 @@
                                 The Direct Dirichlet model is very similar to the Plackett-Luce model, but the quality of the candidates is drawn from a Dirichlet distribution. The key difference is that the higher the sum of the alphas, the more correlated the votes are (the more concentrated the Dirichlet distribution is).
                             </div>
                         </li>
+                        <li>
+                            <input type="radio" name="randomize" value="stratification" id="stratification">
+                            <label for="stratification">Stratification</label>
+                            <div class="random-parameter">
+                                <input type="text" id="stratification-weight" value="0.5" size="4"> weight : float in [0, 1] -
+                                Size of the top class of candidates; voters rank this class ahead of the bottom class.
+                            </div>
+                        </li>
                     </ul>
                     <button onclick="modals.close()">Save</button>
                 </div>

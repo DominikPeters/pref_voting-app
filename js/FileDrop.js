@@ -22,10 +22,12 @@ function dragEndHandler(ev) {
 
 const importFunctions = {
     "toc": "preflib_to_profile(filename)",
+    "toi": "preflib_to_profile(filename)",
+    "soi": "preflib_to_profile(filename)",
     "soc": "preflib_to_profile(filename, as_linear_profile=True)",
-    "csv": "csv_to_profile(filename, as_linear_profile=True)",
-    "json": "json_to_profile(filename, as_linear_profile=True)",
-    "abif": "abif_to_profile(filename)"
+    "csv": "csv_to_profile(filename)",
+    "json": "json_to_profile(filename)",
+    "abif": "abif_to_profile_with_ties(filename)"
 }
 
 function dropHandler(ev) {
