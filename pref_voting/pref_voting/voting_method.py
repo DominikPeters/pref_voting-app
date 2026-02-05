@@ -13,7 +13,21 @@ import numpy as np
 import random
 import json
 from pref_voting.voting_method_properties import VotingMethodProperties
-from filelock import FileLock, Timeout
+try:
+    from filelock import FileLock, Timeout
+except ImportError:
+    class Timeout(Exception):
+        pass
+
+    class FileLock:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
 import importlib.resources
 
 import glob

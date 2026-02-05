@@ -293,7 +293,7 @@ export const rules = {
         "category": "Margin Methods",
         // "For candidates :math:`a` and :math:`b`, a **path** from :math:`a` to :math:`b` is a sequence :math:`x_1, \ldots, x_n` of distinct candidates  with  :math:`x_1=a` and :math:`x_n=b` such that for :math:`1\leq k\leq n-1`, :math:`x_k` is majority preferred to :math:`x_{k+1}`.  The **strength of a path** is the minimal margin along that path.  Say that :math:`a` defeats :math:`b` according to Beat Path if the the strength of the strongest path from :math:`a` to :math:`b` is greater than the strength of the strongest path from :math:`b` to :math:`a`. Then, the candidates that are undefeated according to Beat Path are the winners.  Also known as the Schulze Rule. "
         "description": "For candidates a and b, a path from a to b is a sequence x_1, ..., x_n of distinct candidates  with  x_1=a and x_n=b such that for 1≤k≤n-1, x_k is majority preferred to x_{k+1}.  The strength of a path is the minimal margin along that path.  Say that a defeats b according to Beat Path if the the strength of the strongest path from a to b is greater than the strength of the strongest path from b to a. Then, the candidates that are undefeated according to Beat Path are the winners.  Also known as the Schulze Rule. ",
-        "command": "beat_path_Floyd_Warshall(profile, curr_cands=agenda)",
+        "command": "beat_path(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
         "active": 1,
     },
@@ -303,7 +303,7 @@ export const rules = {
         "category": "Margin Methods",
         // "A **majority cycle** is a sequence :math:`x_1, \ldots ,x_n` of distinct candidates with :math:`x_1=x_n` such that for :math:`1 \leq k \leq n-1`,  :math:`x_k` is majority preferred to :math:`x_{k+1}`.  The Split Cycle winners are determined as follows:  If candidate x has a positive margin over y and (x,y) is not the weakest edge in a cycle, then x defeats y. Equivalently, if x has a positive margin over y and there is no path from y back to x of strength at least the margin of x over y, then x defeats y. The candidates that are undefeated are the Split Cycle winners."
         "description": "A majority cycle is a sequence x_1, ..., x_n of distinct candidates with x_1=x_n such that for 1 ≤ k ≤ n-1,  x_k is majority preferred to x_{k+1}.  The Split Cycle winners are determined as follows:  If candidate x has a positive margin over y and (x,y) is not the weakest edge in a cycle, then x defeats y. Equivalently, if x has a positive margin over y and there is no path from y back to x of strength at least the margin of x over y, then x defeats y. The candidates that are undefeated are the Split Cycle winners.",
-        "command": "split_cycle_Floyd_Warshall(profile, curr_cands=agenda)",
+        "command": "split_cycle(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
         "active": 1
     },
@@ -331,7 +331,7 @@ export const rules = {
         "category": "Margin Methods",
         // "Implementation of  Stable Voting from https://arxiv.org/abs/2108.00542. Stable Voting is a recursive voting method defined as follows: 1.  If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs :math:`(a,b)` of candidates from largest to smallest value of the margin of :math:`a` over :math:`b` such that :math:`a` is undefeated according to Split Cycle, and declare as Stable Voting winners the candidate(s) :math:`a` from the earliest pair(s) :math:`(a,b)` such that :math:`a` is a Simple Stable Voting winner in the election without :math:`b`. "
         "description": "Implementation of  Stable Voting from https://arxiv.org/abs/2108.00542. Stable Voting is a recursive voting method defined as follows: 1.  If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs (a,b) of candidates from largest to smallest value of the margin of a over b such that a is undefeated according to Split Cycle, and declare as Stable Voting winners the candidate(s) a from the earliest pair(s) (a,b) such that a is a Simple Stable Voting winner in the election without b. ",
-        "command": "stable_voting_faster(profile, curr_cands=agenda)",
+        "command": "stable_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
         "active": 0,
     },
@@ -341,7 +341,7 @@ export const rules = {
         "category": "Margin Methods",
         // "Implementation of Simple Stable Voting from https://arxiv.org/abs/2108.00542. Simple Stable Voting is a recursive voting method defined as follows: 1. If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs :math:`(a,b)` of candidates from largest to smallest value of the margin of :math:`a` over :math:`b`, and declare as Simple Stable Voting winners the candidate(s) :math:`a` from the earliest pair(s) :math:`(a,b)` such that :math:`a` is a Simple Stable Voting winner in the election without :math:`b`. "
         "description": "Implementation of Simple Stable Voting from https://arxiv.org/abs/2108.00542. Simple Stable Voting is a recursive voting method defined as follows: 1. If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs (a,b) of candidates from largest to smallest value of the margin of a over b, and declare as Simple Stable Voting winners the candidate(s) a from the earliest pair(s) (a,b) such that a is a Simple Stable Voting winner in the election without b. ",
-        "command": "simple_stable_voting_faster(profile, curr_cands=agenda)",
+        "command": "simple_stable_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
         "active": 0
     },
