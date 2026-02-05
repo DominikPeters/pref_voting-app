@@ -256,6 +256,15 @@ export const rules = {
         "supportsWeakOrders": 1,
         "active": 0
     },
+    "weak_condorcet": {
+        "fullName": "Weak Condorcet",
+        "shortName": "Weak Condorcet",
+        "category": "C1 Methods",
+        "description": "Return all candidates who are not majority-defeated by any other candidate.",
+        "command": "weak_condorcet(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
     "banks": {
         "fullName": "Banks Set",
         "shortName": "Banks",
@@ -287,6 +296,24 @@ export const rules = {
         "supportsWeakOrders": 1,
         "active": 1
     },
+    "minimax_support": {
+        "fullName": "Minimax (Support)",
+        "shortName": "Minimax (Support)",
+        "category": "Margin Methods",
+        "description": "A Minimax variant that measures worst pairwise loss by support counts.",
+        "command": "minimax_support(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
+    "leximax": {
+        "fullName": "Leximax",
+        "shortName": "Leximax",
+        "category": "Margin Methods",
+        "description": "Break Minimax ties lexicographically by comparing second-worst losses, then third-worst, etc.",
+        "command": "leximax(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
     "beat_path": {
         "fullName": "Beat Path / Schulze",
         "shortName": "Beat Path",
@@ -314,7 +341,7 @@ export const rules = {
         "description": "Order the edges in the margin graph from largest to smallest and lock them in in that order, skipping edges that create a cycle.  If there are ties in the margins, break the ties using a tie-breaking rule: a linear ordering over the edges.   A candidate is a Ranked Pairs winner if it wins according to some tie-breaking rule. Also known as Tideman's Rule.",
         "command": "ranked_pairs_with_test(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
-        "active": 0
+        "active": 1
     },
     "river": {
         "fullName": "River",
@@ -323,7 +350,7 @@ export const rules = {
         "description": "Order the edges in the weak margin graph from largest to smallest and lock them in in that order, skipping edges that create a cycle *and edges in which there is already an edge pointing to the target*.  Break ties using a tie-breaking  linear ordering over the edges.  A candidate is a River winner if it wins according to some tie-breaking rule. See https://electowiki.org/wiki/River.",
         "command": "river_with_test(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
-        "active": 0
+        "active": 1
     },
     "stable_voting": {
         "fullName": "Stable Voting",
@@ -344,6 +371,33 @@ export const rules = {
         "command": "simple_stable_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
         "active": 0
+    },
+    "weighted_covering": {
+        "fullName": "Weighted Covering",
+        "shortName": "Weighted Covering",
+        "category": "Margin Methods",
+        "description": "Return candidates not covered under the weighted-covering relation.",
+        "command": "weighted_covering(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
+    "beta_uncovered_set": {
+        "fullName": "beta-Uncovered Set",
+        "shortName": "beta-Uncovered",
+        "category": "Margin Methods",
+        "description": "Return candidates not beta-covered by any other candidate (default beta = 0.5).",
+        "command": "beta_uncovered_set(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
+    "simplified_dodgson": {
+        "fullName": "Simplified Dodgson",
+        "shortName": "Simplified Dodgson",
+        "category": "Margin Methods",
+        "description": "Return the Condorcet winner if one exists; otherwise candidates with smallest total margins of loss.",
+        "command": "simplified_dodgson(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
     },
     // essential set not supported
     "loss_trimmer": {
@@ -445,6 +499,15 @@ export const rules = {
         "supportsWeakOrders": 0,
         "active": 0
     },
+    "copeland_global_minimax": {
+        "fullName": "Copeland-Global-Minimax",
+        "shortName": "Copeland-Global-Minimax",
+        "category": "Combined Methods",
+        "description": "From the Copeland winners, return candidates with smallest global Minimax score.",
+        "command": "copeland_global_minimax(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1
+    },
     "kemeny_young": {
         "fullName": "Kemeny-Young winners",
         "shortName": "Kemeny-Young",
@@ -452,6 +515,15 @@ export const rules = {
         "description": "A Kemeny-Young ranking is a ranking that minimizes the sum of the Kendall tau distances to the voters' rankings. The Kemeny-Young winners are the candidates that are ranked first by some Kemeny-Young ranking.",
         "command": "kemeny_young(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "active": 1
+    },
+    "pareto": {
+        "fullName": "Pareto",
+        "shortName": "Pareto",
+        "category": "Other Methods",
+        "description": "Return candidates that are not Pareto dominated.",
+        "command": "pareto(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
         "active": 1
     },
     "bucklin": {
