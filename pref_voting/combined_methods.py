@@ -13,11 +13,13 @@ from pref_voting.iterative_methods import iterated_removal_cl, instant_runoff, i
 from pref_voting.profiles import _find_updated_profile, _num_rank
 
 from pref_voting.c1_methods import condorcet, smith_set, copeland, top_cycle
-from pref_voting.margin_based_methods import minimax
+from pref_voting.margin_based_methods import minimax, minimax_scores
 from pref_voting.profiles import Profile
 from pref_voting.profiles_with_ties import ProfileWithTies
+from pref_voting.voting_method_properties import VotingMethodProperties, ElectionTypes
 
-@vm(name="Daunou")
+@vm(name = "Daunou",
+    input_types = [ElectionTypes.PROFILE])
 def daunou(profile, curr_cands=None):
     """Implementation of Daunou's voting method as described in the paper: https://link.springer.com/article/10.1007/s00355-020-01276-w
 
@@ -58,7 +60,8 @@ def daunou(profile, curr_cands=None):
     return sorted(winners)
 
 
-@vm(name="Blacks")
+@vm(name = "Blacks",
+    input_types = [ElectionTypes.PROFILE])
 def blacks(profile, curr_cands=None):
     """If a Condorcet winner exists return that winner. Otherwise, return the Borda winning set.
 
@@ -96,7 +99,8 @@ def blacks(profile, curr_cands=None):
 
     return winners
 
-@vm(name="Smith IRV")
+@vm(name = "Smith IRV",
+    input_types = [ElectionTypes.PROFILE])
 def smith_irv(profile, curr_cands=None):
     """After restricting to the Smith Set, return the Instant Runoff winner.
 
@@ -129,7 +133,8 @@ def smith_irv(profile, curr_cands=None):
 
     return instant_runoff(profile, curr_cands=smith)
 
-@vm(name="Smith IRV PUT")
+@vm(name = "Smith IRV PUT",
+    input_types = [ElectionTypes.PROFILE])
 def smith_irv_put(profile, curr_cands=None):
     """After restricting to the Smith Set, return the Instant Runoff winner.
 
@@ -162,14 +167,15 @@ def smith_irv_put(profile, curr_cands=None):
 
     return instant_runoff_put(profile, curr_cands=smith)
 
-
-@vm(name="Condorcet IRV")
-def condorcet_irv(profile, curr_cands=None):
+@vm(name = "Condorcet IRV",
+    input_types = [ElectionTypes.PROFILE])
+def condorcet_irv(profile, curr_cands=None, algorithm = "basic", **kwargs):
     """If a Condorcet winner exists, elect that candidate, otherwise return the instant runoff winners.
 
     Args:
         profile (Profile): An anonymous profile of linear orders on a set of candidates
         curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
+        algorithm (str, optional): The algorithm to use.  Options are "basic" and "recursive".  The default is "basic".
 
     Returns:
         A sorted list of candidates
@@ -196,9 +202,11 @@ def condorcet_irv(profile, curr_cands=None):
     if cw is not None: 
         return [cw]
     else:
-        return instant_runoff(profile, curr_cands=curr_cands)
 
-@vm(name="Condorcet IRV PUT")
+        return instant_runoff(profile, curr_cands=curr_cands, algorithm=algorithm,  **kwargs)
+
+@vm(name = "Condorcet IRV PUT",
+    input_types = [ElectionTypes.PROFILE])
 def condorcet_irv_put(profile, curr_cands=None):
     """If a Condorcet winner exists, elect that candidate, otherwise return the instant runoff put winners.
 
@@ -285,7 +293,8 @@ def _compose(vm1, vm2):
 
     return _vm
 
-@vm(name="Condorcet Plurality")
+@vm(name = "Condorcet Plurality",
+    input_types = [ElectionTypes.PROFILE])
 def condorcet_plurality(profile, curr_cands = None):
     """Return the Condorcet winner if one exists, otherwise return the plurality winners.
 
@@ -301,12 +310,13 @@ def condorcet_plurality(profile, curr_cands = None):
     return _compose(condorcet, plurality)(profile, curr_cands=curr_cands)
 
 
-@vm(name="Smith-Minimax")
-def smith_minimax(profile, curr_cands = None):
+@vm(name="Smith-Minimax",
+    input_types=[ElectionTypes.PROFILE, ElectionTypes.PROFILE_WITH_TIES, ElectionTypes.MARGIN_GRAPH])
+def smith_minimax(edata, curr_cands = None):
     """Return the Minimax winner after restricting to the Smith set.
 
     Args:
-        profile (Profile): An anonymous profile of linear orders on a set of candidates
+        profile (Profile, ProfileWithTies, MarginGraph): An anonymous profile of linear orders on a set of candidates
         curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
 
     Returns:
@@ -314,21 +324,37 @@ def smith_minimax(profile, curr_cands = None):
 
     """
 
-    return _compose(top_cycle, minimax)(profile, curr_cands=curr_cands)
+    return _compose(top_cycle, minimax)(edata, curr_cands=curr_cands)
 
-@vm(name="Copeland-Local-Borda")
-def copeland_local_borda(profile, curr_cands = None):
+@vm(name="Copeland-Local-Borda",
+    input_types=[ElectionTypes.PROFILE,  ElectionTypes.MARGIN_GRAPH])
+def copeland_local_borda(edata, curr_cands = None):
     """Return the Borda winner after restricting to the Copeland winners.
 
     Args:
-        profile (Profile): An anonymous profile of linear orders on a set of candidates
+        profile (Profile, MarginGraph): An anonymous profile of linear orders on a set of candidates
         curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
 
     Returns:
         A sorted list of candidates
 
     """
-    return _compose(copeland, borda)(profile, curr_cands=curr_cands)
+    return _compose(copeland, borda)(edata, curr_cands=curr_cands)
+
+@vm(name="Copeland-Local-Minimax",
+    input_types=[ElectionTypes.PROFILE,  ElectionTypes.MARGIN_GRAPH])
+def copeland_local_minimax(edata, curr_cands = None):
+    """Return the Minimax winner after restricting to the Copeland winners.
+
+    Args:
+        profile (Profile, MarginGraph): An anonymous profile of linear orders on a set of candidates
+        curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
+
+    Returns:
+        A sorted list of candidates
+
+    """
+    return _compose(copeland, minimax)(edata, curr_cands=curr_cands)
 
 def voting_method_with_scoring_tiebreaker(vm, score, name):
 
@@ -357,7 +383,8 @@ def voting_method_with_scoring_tiebreaker(vm, score, name):
 
     return _vm 
 
-@vm(name="Copeland-Global-Borda")
+@vm(name="Copeland-Global-Borda",
+    input_types=[ElectionTypes.PROFILE])
 def copeland_global_borda(profile, curr_cands=None):
     """From the Copeland winners, return the candidate with the largest *global* Borda score.
 
@@ -371,6 +398,31 @@ def copeland_global_borda(profile, curr_cands=None):
     """
 
     return voting_method_with_scoring_tiebreaker(copeland, lambda num_cands, rank : num_cands - rank, "Copeland-Global-Borda")(profile, curr_cands=curr_cands)
+
+
+@vm(name="Copeland-Global-Minimax",
+    input_types=[ElectionTypes.PROFILE, ElectionTypes.PROFILE_WITH_TIES, ElectionTypes.MARGIN_GRAPH])
+def copeland_global_minimax(edata, curr_cands=None):
+    """From the Copeland winners, return the candidates with the best *global* Minimax score.
+
+    Args:
+        edata (Profile, ProfileWithTies, MarginGraph): Any edata with a Margin method.
+        curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
+
+    Returns:
+        A sorted list of candidates
+
+    """
+
+    curr_cands = edata.candidates if curr_cands is None else curr_cands
+
+    copeland_ws = copeland(edata, curr_cands=curr_cands)
+
+    mm_scores = minimax_scores(edata, curr_cands=curr_cands)
+
+    best_score = max([mm_scores[c] for c in copeland_ws])
+
+    return sorted([c for c in copeland_ws if mm_scores[c] == best_score])
 
 def faceoff(vm1, vm2):
     """If the vm1 and vm2 winners are the same, return that set of winners. Otherwise, for each choice of a vm1 winner A and vm2 winner B, add to the ultimate winners whichever of A or B is majority preferred to the other (or both if they are tied).
@@ -442,12 +494,13 @@ def _faceoff(vm1, vm2):
 
     return _vm
 
-@vm(name="Borda-Minimax Faceoff")
-def borda_minimax_faceoff(profile, curr_cands=None):
+@vm(name="Borda-Minimax Faceoff",
+    input_types=[ElectionTypes.PROFILE])
+def borda_minimax_faceoff(edata, curr_cands=None):
     """If the Borda and Minimax winners are the same, return that set of winners. Otherwise, for each choice of a Borda winner A and Minimax winner B, add to the ultimate winners whichever of A or B is majority preferred to the other (or both if they are tied).
 
     Args:
-        profile (Profile): An anonymous profile of linear orders on a set of candidates
+        profile (Profile, MarginGraph): An anonymous profile of linear orders on a set of candidates
         curr_cands (List[int], optional): If set, then find the winners for the profile restricted to the candidates in ``curr_cands``
 
     Returns:
@@ -458,18 +511,4 @@ def borda_minimax_faceoff(profile, curr_cands=None):
 
     """
 
-    return _faceoff(borda, minimax)(profile, curr_cands=curr_cands)
-
-combined_vms = [
-    daunou, 
-    blacks, 
-    condorcet_irv, 
-    condorcet_irv_put, 
-    smith_irv, 
-    smith_irv_put, 
-    smith_minimax,
-    condorcet_plurality,
-    copeland_local_borda,
-    copeland_global_borda,
-    borda_minimax_faceoff
-    ]
+    return _faceoff(borda, minimax)(edata, curr_cands=curr_cands)

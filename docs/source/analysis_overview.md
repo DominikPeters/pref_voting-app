@@ -26,12 +26,31 @@ Functions that can be used to compare and contrast voting methods.
 
 ```
 
+## Resoluteness
+
+
+```{eval-rst}
+
+
+.. autofunction:: pref_voting.analysis.resoluteness_data
+
+
+```
+
 ## Axiom Violations  
 
 ```{eval-rst}
 
 .. autofunction:: pref_voting.analysis.axiom_violations_data
 
+
+```
+
+## Binomial Confidence Interval
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.analysis.binomial_confidence_interval
 
 ```
 

@@ -16,6 +16,8 @@ class SocialWelfareFunction(object):
         swf (function): An implementation of a voting method. The function should accept any type of profile, and a keyword parameter ``curr_cands`` to find the winner after restricting to ``curr_cands``. 
         name (string): The Human-readable name of the social welfare function.
 
+    Returns:
+        A ranking (Ranking) of the candidates.
     """
     def __init__(self, swf, name = None): 
         
@@ -29,6 +31,17 @@ class SocialWelfareFunction(object):
             return []
         return self.swf(edata, curr_cands = curr_cands, **kwargs)
         
+    def winners(self, edata, curr_cands = None, **kwargs):
+        """Return a sorted list of the first place candidates."""
+
+        return sorted(self.swf(edata, curr_cands = curr_cands, **kwargs).first())
+    
+    def display(self, edata, curr_cands = None, **kwargs):
+        """Display the result of the social welfare function."""
+
+        ranking = self.swf(edata, curr_cands = curr_cands, **kwargs)
+        print(f"{self.name} ranking is {ranking}")
+
     def set_name(self, new_name):
         """Set the name of the social welfare function."""
 

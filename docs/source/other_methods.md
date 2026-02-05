@@ -1,15 +1,21 @@
 Other Methods
 =======================================
 
-## Majority
+## Absolute Majority
 
 ```{eval-rst}
 
-.. autofunction:: pref_voting.other_methods.majority
+.. autofunction:: pref_voting.other_methods.absolute_majority
 
 ```
 
+## Pareto
 
+```{eval-rst}
+
+.. autofunction:: pref_voting.other_methods.pareto
+
+```
 
 ## Kemeny-Young
 
@@ -25,6 +31,14 @@ Other Methods
 ```{eval-rst}
 
 .. autofunction:: pref_voting.other_methods.kemeny_young_rankings
+
+```
+
+## Preliminary Weighted Condorcet
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.other_methods.preliminary_weighted_condorcet
 
 ```
 
@@ -68,6 +82,14 @@ Other Methods
 
 ```
 
+## Dodgson
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.other_methods.dodgson
+
+```
+
 
 ## Bracket Voting
 
@@ -82,6 +104,16 @@ Other Methods
 ```{eval-rst}
 
 .. autofunction:: pref_voting.other_methods.superior_voting
+
+```
+
+## Bradley-Terry
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.other_methods.bradley_terry
+
+.. autofunction:: pref_voting.other_methods.bradley_terry_ranking
 
 ```
 

@@ -21,6 +21,34 @@ from pref_voting.weighted_majority_graphs import (
 import os
 import pandas as pd
 
+def _num_rank_profile_with_ties(rankings, rcounts, cand, level):
+    """
+    Counts the number of voters that rank candidate `cand` at rank `level` (1-based)
+    in a ProfileWithTies object.
+
+    Args:
+        rankings: list of Ranking objects
+        rcounts: list of counts for each ranking
+        cand: candidate
+        level: rank to check (1-based)
+
+    Returns:
+        Total number of voters ranking candidate `cand` at rank `level`
+    """
+    total = 0
+    for ranking, count in zip(rankings, rcounts):
+        if cand in ranking.rmap and ranking.rmap[cand] == level - 1:  # Convert 1-based rank to 0-based
+            total += count
+    return total
+
+def same_ranking_extended_strict_pref(ranking1, ranking2, candidates): 
+    # check if ranking1 and ranking2 have the same ranking of candidates
+    for c1 in candidates:
+        for c2 in candidates:
+            if (not ranking1.extended_strict_pref(c1, c2) and ranking2.extended_strict_pref(c1, c2)) or (not ranking2.extended_strict_pref(c1, c2) and ranking1.extended_strict_pref(c1, c2)):
+                return False
+    return True
+
 class ProfileWithTies(object):
     """An anonymous profile of (truncated) strict weak orders of :math:`n` candidates. 
 
@@ -62,7 +90,7 @@ class ProfileWithTies(object):
         self.num_cands = len(self.candidates)
         """The number of candidates in the profile."""
 
-        self.cmap = cmap if cmap is not None else {c: c for c in self.candidates}
+        self.cmap = cmap if cmap is not None else {c: str(c) for c in self.candidates}
         """The candidate map is a dictionary associating a candidate with the name used when displaying a candidate."""
 
         self._rankings = [
@@ -351,21 +379,38 @@ class ProfileWithTies(object):
             else int(ceil(float(self.num_voters) / 2))
         )
 
-    def plurality_scores(self, curr_cands = None): 
+    def plurality_scores(self, curr_cands=None):
         """
-        Return the Plurality Scores of the candidates given that each voter ranks a single candidate in first place.  
+        Return the Plurality Scores of the candidates, assuming that each voter ranks a single candidate in first place.
+
+        Parameters:
+        - curr_cands: List of current candidates to consider. If None, use all candidates.
+
+        Returns:
+        - Dictionary with candidates as keys and their plurality scores as values.
+
+        Raises:
+        - ValueError: If any voter ranks multiple candidates in first place.
         """
-        
-        curr_cands = curr_cands if curr_cands is not None else self.candidates
-        
-        if any([len(r.first(cs=curr_cands)) > 1 for r in self._rankings]): 
-            print("Error: Cannot find the plurality scores unless all voters rank a unique candidate in first place.")
-            return {}
-        
+
+        if curr_cands is None:
+            curr_cands = self.candidates
+
+        # Check if any voter ranks multiple candidates in first place
+        if any(len(r.first(cs=curr_cands)) > 1 for r in self._rankings):
+            raise ValueError("Cannot find the plurality scores unless all voters rank a unique candidate in first place.")
+
         rankings, rcounts = self.rankings_counts
-        
-        return {cand: sum([c for r, c in zip(rankings, rcounts) if [cand] == r.first(cs=curr_cands)]) 
-                for cand in curr_cands}
+
+        plurality_scores = {cand: 0 for cand in curr_cands}
+
+        for ranking, count in zip(rankings, rcounts):
+            first_place_candidates = ranking.first(cs=curr_cands)
+            if len(first_place_candidates) == 1:
+                cand = first_place_candidates[0]
+                plurality_scores[cand] += count
+
+        return plurality_scores
 
     def plurality_scores_ignoring_overvotes(self, curr_cands=None): 
         """
@@ -386,6 +431,45 @@ class ProfileWithTies(object):
         restricted_prof = self.remove_candidates([c for c in self.candidates if c not in curr_cands])
         return borda_score_fnc(restricted_prof)
 
+    def tops_scores(
+            self, 
+            curr_cands=None, 
+            score_type='approval'):
+        """
+        Return the tops scores of the candidates. 
+
+        Parameters:
+        - curr_cands: List of current candidates to consider. If None, use all candidates.
+        - score_type: Type of tops score to compute. Options are 'approval' or 'split'.
+
+        Returns:
+        - Dictionary with candidates as keys and their tops scores as values.
+        """
+
+        if curr_cands is None:
+            curr_cands = self.candidates
+
+        rankings, rcounts = self.rankings_counts
+
+        if score_type not in {'approval', 'split'}:
+            raise ValueError("Invalid score_type specified. Use 'approval' or 'split'.")
+
+        tops_scores = {cand: 0 for cand in curr_cands}
+
+        if score_type == 'approval':
+            for ranking, count in zip(rankings, rcounts):
+                for cand in curr_cands:
+                    if cand in ranking.first(cs=curr_cands):
+                        tops_scores[cand] += count
+
+        elif score_type == 'split':
+            for ranking, count in zip(rankings, rcounts):
+                for cand in curr_cands:
+                    if cand in ranking.first(cs=curr_cands):
+                        tops_scores[cand] += count * 1/len(ranking.first(cs=curr_cands))
+
+        return tops_scores
+        
     def remove_empty_rankings(self): 
         """
         Remove the empty rankings from the profile. 
@@ -479,7 +563,116 @@ class ProfileWithTies(object):
             return None
         new_rankings = [tuple([cand_to_cindx[c] for c in r]) for r in _new_rankings]
         return Profile(new_rankings, rcounts=rcounts, cmap=new_cmap)
-                
+
+    def replace_rankings(
+            self, 
+            old_ranking, 
+            new_ranking, 
+            num, 
+            use_extended_strict_preference_for_comparison = False): 
+        """
+
+        Create a new profile by replacing num ballots matching old_ranking with new_ranking.
+
+        If num is greater than the number of ballots matching old_ranking, then all ballots matching old_ranking are replaced with new_ranking.
+
+        
+        """
+        using_extended_strict_pref = self.using_extended_strict_preference
+        
+        ranking_types, ranking_counts = self.rankings_counts
+
+        if not isinstance(old_ranking, Ranking) or not isinstance(new_ranking, Ranking):
+            raise ValueError("rankings must be of type Ranking")
+            
+        if use_extended_strict_preference_for_comparison:
+            same_ranking = lambda r1, r2: same_ranking_extended_strict_pref(r1, r2, self.candidates)
+        else:
+            same_ranking = lambda r1, r2: r1 == r2
+            
+        new_ranking_types = []
+        new_ranking_counts = []
+
+        current_num = 0
+        for r, c in zip(ranking_types, ranking_counts):
+            
+            if current_num < num and same_ranking(r, old_ranking):
+                if c > num - current_num:
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(num - current_num)
+                    new_ranking_types.append(old_ranking)
+                    new_ranking_counts.append(c - (num - current_num))
+                    current_num = num
+                elif c == num - current_num and same_ranking(r, old_ranking):
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(num - current_num)
+                    current_num = num
+                elif c < num - current_num:
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(c)
+                    current_num += c
+            else:
+                new_ranking_types.append(r)
+                new_ranking_counts.append(c)
+
+        new_prof = ProfileWithTies(new_ranking_types, new_ranking_counts, self.candidates, cmap=self.cmap)
+
+        if using_extended_strict_pref:
+            new_prof.use_extended_strict_preference()
+    
+        assert self.num_voters == new_prof.num_voters, "Problem: the number of voters is not the same in the new profile!"
+        
+        return new_prof   
+    
+    def num_bullet_votes(self): 
+        """
+        Return the number of bullet votes in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if r.is_bullet_vote()])
+    
+    def num_empty_rankings(self):
+        """
+        Return the number of empty rankings in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if r.is_empty()])
+    
+    def num_linear_orders(self):
+        """
+        Return the number of linear orders in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if r.is_linear(len(self.candidates))])
+    
+    def num_truncated_linear_orders(self):
+        """
+        Return the number of truncated linear orders in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if r.is_truncated_linear(len(self.candidates))])
+    
+    def num_rankings_with_ties(self):
+        """
+        Return the number of rankings with ties in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if r.has_tie()])
+    
+    def num_ranked_all_candidates(self):
+        """
+        Return the number of rankings that rank all candidates in the profile. 
+        """
+        
+        return sum([c for r,c in zip(*self.rankings_counts) if all([r.is_ranked(cand) for cand in self.candidates])])
+    
+    def num_ranking_each_candidate(self):
+        """Return a dictionary mapping each candidate to the number of voters that rank the candidate. """
+
+        return {
+            cand: sum([c for r,c in zip(*self.rankings_counts) if r.is_ranked(cand)]) 
+                      for cand in self.candidates
+        }
     def margin_graph(self):
         """Returns the margin graph of the profile.  See :class:`.MarginGraph`.
 
@@ -664,7 +857,13 @@ The number of rankings with skipped ranks: {num_with_skipped_ranks}
         """
         return f"ProfileWithTies({[r.rmap for r in self._rankings]}, rcounts={[int(c) for c in self.rcounts]}, cmap={self.cmap})"
 
-    def display(self, cmap=None, style="pretty", curr_cands=None):
+    def display(
+            self, 
+            cmap=None, 
+            style="pretty", 
+            curr_cands=None,
+            order_by_counts=False,
+            ):
         """Display a profile (restricted to ``curr_cands``) as an ascii table (using tabulate).
 
         :param cmap: the candidate map (overrides the cmap associated with this profile)
@@ -691,6 +890,11 @@ The number of rankings with skipped ranks: {num_with_skipped_ranks}
         curr_cands = curr_cands if curr_cands is not None else self.candidates
         cmap = cmap if cmap is not None else self.cmap
 
+        existing_ranks = list(range(min(min(r.ranks) for r in _rankings), max(max(r.ranks) for r in _rankings) + 1)) if len(_rankings) > 0 else []
+        if order_by_counts: 
+            _rankings, rcounts = zip(*sorted(zip(_rankings, self.rcounts), key=lambda x: x[1], reverse=True))
+        else:
+            rcounts = self.rcounts
         print(
             tabulate(
                 [
@@ -704,9 +908,9 @@ The number of rankings with skipped ranks: {num_with_skipped_ranks}
                         )
                         for r in _rankings
                     ]
-                    for rank in self.ranks
+                    for rank in existing_ranks
                 ],
-                self.rcounts,
+                rcounts,
                 tablefmt=style,
             )
         )
@@ -790,7 +994,50 @@ The number of rankings with skipped ranks: {num_with_skipped_ranks}
             items_to_skip=items_to_skip,
             as_linear_profile=False,
             )
+    
+    def to_latex(self, cmap=None, curr_cands=None):
+        """
+        Returns a LaTeX table representation of the profile with ties.
 
+        :param cmap: Dictionary mapping candidates to their names/labels. If None, use self.cmap.
+        :param curr_cands: List of candidates to include in the table. If None, use all candidates.
+        :return: A string containing the LaTeX table.
+        """
+        cmap = self.cmap if cmap is None else cmap
+        curr_cands = self.candidates if curr_cands is None else curr_cands
+
+        prof = copy.deepcopy(self)
+        prof.remove_empty_rankings()
+
+        _rankings = copy.deepcopy(prof._rankings)
+
+        if len(_rankings) == 0: # if there are no rankings, return an empty string
+            return ""
+        
+        _rankings = [r.normalize_ranks() or r for r in _rankings ]
+
+        latex = "\\begin{tabular}{" + "c" * len(_rankings) + "}\n"
+        latex += " & ".join(["$" + str(count) + "$" for count in self.rcounts]) + "\\\\\n"
+        latex += "\\hline\n"
+
+        max_rank = max(max(ranking.rmap.values()) for ranking in _rankings)
+
+        for rank in range(1, max_rank + 1):
+            row = []
+            for ranking in _rankings:
+                tied_cands = sorted([cmap[c] for c in curr_cands if c in ranking.rmap and ranking.rmap[c] == rank])
+                if tied_cands:
+                    row.append("$" + ",".join(tied_cands) + "$")
+                else:
+                    prev_cands = [c for c in curr_cands if c in ranking.rmap and ranking.rmap[c] < rank]
+                    if prev_cands:
+                        row.append(" ")
+                    else:
+                        row.append("$\\cdots$")
+            latex += " & ".join(row) + "\\\\\n"
+
+        latex += "\\end{tabular}"
+        return latex
 
     def __eq__(self, other_prof): 
         """

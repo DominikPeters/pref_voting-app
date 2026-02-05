@@ -20,3 +20,5 @@ nashpy
 seaborn
 numba
 preflibtools
+prefsampling
+filelock

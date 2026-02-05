@@ -89,6 +89,26 @@ Combined Methods
 
 ```
 
+## Copeland-Global-Minimax
 
+```{eval-rst}
 
+.. autofunction:: pref_voting.combined_methods.copeland_global_minimax
 
+```
+
+## Copeland-Local-Minimax
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.combined_methods.copeland_local_minimax
+
+```
+
+## Borda-Minimax Faceoff
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.combined_methods.borda_minimax_faceoff
+
+```

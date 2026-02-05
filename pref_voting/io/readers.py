@@ -142,6 +142,7 @@ def abif_to_profile_with_ties(filename, cand_type=None):
 def preflib_to_profile(
         instance_or_preflib_file, 
         include_cmap=False,
+        use_cand_names=False,
         as_linear_profile=False): 
     
     """
@@ -152,6 +153,8 @@ def preflib_to_profile(
     Args:
         preflib_file (str): the path to the file
         include_cmap (bool): if True, then include the candidate map.  Defaults to False.
+        use_cand_names (bool): if True, then use the candidate map as the candidate names.  Defaults to False.
+        as_linear_profile (bool): if True, then return a Profile object.  Defaults to False.  If False, then return a ProfileWithTies object.
 
     Returns:    
         Profile or ProfileWithTies: the profile read from the file
@@ -175,7 +178,7 @@ def preflib_to_profile(
 
     rankings = []
     rcounts = []
-    cmap = {c:str(c) for c in range(instance.num_alternatives)}
+    cmap = {c:str(c) for c in instance.alternatives_name.keys()}
 
     if not as_linear_profile:
 
@@ -183,16 +186,22 @@ def preflib_to_profile(
             rank = dict()
             for r,cs in enumerate(order): 
                 for c in cs: 
-                    rank[c] = r + 1
+                    if not use_cand_names:
+                        rank[c] = r + 1
+                    else: 
+                        rank[instance.alternatives_name[c]] = r + 1
                     if include_cmap:
-                        cmap[c] = instance.alternatives_name[c]
+                        if  use_cand_names:
+                            cmap[instance.alternatives_name[c]] = instance.alternatives_name[c]
+                        else:
+                            cmap[c] = instance.alternatives_name[c]
 
             rankings.append(rank)
             rcounts.append(instance.multiplicity[order])
 
         return ProfileWithTies(rankings, 
-                       rcounts=rcounts,
-                       cmap=cmap)
+                               rcounts=rcounts,
+                               cmap=cmap)
 
     elif as_linear_profile: 
         
@@ -237,7 +246,7 @@ def csv_to_profile(
         """
         
         if csv_format == "rank_columns":
-            df = pd.read_csv(filename)
+            df = pd.read_csv(filename, low_memory=False)
             items_to_skip = items_to_skip if items_to_skip is not None else ["skipped"]
             ranks = []
             rank_columns = [col for col in df.columns if col.startswith('rank') or col.startswith('Rank')]

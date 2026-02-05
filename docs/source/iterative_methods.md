@@ -147,6 +147,14 @@ To illustrate the difference with respect to the second question, consider Insta
 
 ```
 
+### Tideman's Alterantive GOCHA
+    
+```{eval-rst}
+
+.. autofunction:: pref_voting.iterative_methods.tideman_alternative_gocha
+
+```
+
 ## Coombs
 
 ```{eval-rst}
@@ -290,6 +298,31 @@ To illustrate the difference with respect to the second question, consider Insta
 ```{eval-rst}
 
 .. autofunction:: pref_voting.iterative_methods.knockout
+
+
+```
+
+## Plurality Veto
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.iterative_methods.plurality_veto
+
+
+```
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.iterative_methods.plurality_veto_with_explanation
+
+
+```
+
+## Consensus Builder
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.iterative_methods.consensus_builder
 
 
 ```
