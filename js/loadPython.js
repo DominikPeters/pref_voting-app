@@ -30,11 +30,10 @@ export async function loadPython() {
         loading.innerHTML = "Loading... (90%)";
     }, 0);
     loading.innerHTML = "Loading... (80%)";
-    await window.pyodide.runPythonAsync(`
-        from pyodide.http import pyfetch
-        response = await pyfetch("pref_voting.zip")
-        await response.unpack_archive(format="zip")
-    `);
+    let zipResponse = await fetch("pref_voting.zip?v1");
+    let zipBinary = await zipResponse.arrayBuffer();
+    pyodide.unpackArchive(zipBinary, "zip", { extractDir: "pref_voting" });
+    pyodide.pyimport("pref_voting");
     await window.pyodide.runPython(`
         from pref_voting.profiles import Profile
         from pref_voting.scoring_methods import plurality, borda, anti_plurality
