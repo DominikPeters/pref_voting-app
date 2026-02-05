@@ -291,10 +291,14 @@
             <div class="hystmodal__wrap">
                 <div class="hystmodal__window" role="dialog" aria-modal="true">
                     <button data-hystclose class="hystmodal__close">Close</button>
-                    <div>
-                        <button id="compute-heavy-axioms-button">Compute slow axioms</button> (can be slow)
+                    <div id="committee-info-modal-rule-explanation-container">
+                        <strong>Rule explanation:</strong>
+                        <div id="committee-info-modal-rule-explanation"></div>
                     </div>
-                    <strong>Axiom checks:</strong>
+                    <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <strong>Axiom checks:</strong>
+                        <span><button id="compute-heavy-axioms-button">Compute slow axioms</button> (can be slow)</span>
+                    </div>
                     <div id="committee-info-modal-properties-list"></div>
                 </div>
             </div>

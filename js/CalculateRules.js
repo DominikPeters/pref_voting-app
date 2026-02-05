@@ -80,6 +80,202 @@ function getAxiomByKey(axiomKey) {
     return state.axiomRegistry.find(a => a.key === axiomKey) || { key: axiomKey, shortName: axiomKey, fullName: axiomKey };
 }
 
+function explanationFunctionNameForRule(rule) {
+    const vmName = rules[rule].command.split("(")[0];
+    return `${vmName}_with_explanation`;
+}
+
+function candidateLabel(cand) {
+    let c = cand;
+    if (typeof c === "string" && /^-?\\d+$/.test(c)) {
+        c = parseInt(c, 10);
+    }
+    if (typeof c === "number" && state.cmap[c] !== undefined) {
+        return state.cmap[c];
+    }
+    return String(c);
+}
+
+function makeCandidateChip(cand) {
+    const chip = document.createElement("span");
+    chip.className = "candidate-chip";
+    let c = cand;
+    if (typeof c === "string" && /^-?\\d+$/.test(c)) {
+        c = parseInt(c, 10);
+    }
+    if (typeof c === "number" && settings.colors[c] !== undefined) {
+        chip.style.backgroundColor = settings.colors[c];
+    } else {
+        chip.style.backgroundColor = "#888";
+    }
+    chip.style.cursor = "default";
+    chip.innerText = candidateLabel(c);
+    return chip;
+}
+
+function appendCandidatesInline(parent, cands) {
+    const arr = Array.isArray(cands) ? cands : [cands];
+    arr.forEach((cand, idx) => {
+        parent.appendChild(makeCandidateChip(cand));
+        if (idx < arr.length - 1) {
+            parent.appendChild(document.createTextNode(" "));
+        }
+    });
+}
+
+function appendScoreList(parent, scores) {
+    const ul = document.createElement("ul");
+    const entries = Object.entries(scores || {}).sort((a, b) => Number(b[1]) - Number(a[1]));
+    for (const [cand, score] of entries) {
+        const li = document.createElement("li");
+        li.appendChild(document.createTextNode("Score of "));
+        li.appendChild(makeCandidateChip(cand));
+        li.appendChild(document.createTextNode(`: ${score}`));
+        ul.appendChild(li);
+    }
+    parent.appendChild(ul);
+}
+
+function renderExplanationHtml(rule, data, fallbackText) {
+    const container = document.getElementById("committee-info-modal-rule-explanation");
+    container.innerHTML = "";
+
+    const fallbackPre = () => {
+        const pre = document.createElement("pre");
+        pre.innerText = fallbackText || JSON.stringify(data, null, 2);
+        container.appendChild(pre);
+    };
+
+    if (!Array.isArray(data) || data.length < 1) {
+        fallbackPre();
+        return;
+    }
+
+    const winners = Array.isArray(data[0]) ? data[0] : [data[0]];
+    const winnersP = document.createElement("p");
+    winnersP.appendChild(document.createTextNode("Winners: "));
+    appendCandidatesInline(winnersP, winners);
+    container.appendChild(winnersP);
+
+    const details = data.length > 1 ? data[1] : null;
+    if (details == null) {
+        return;
+    }
+
+    if (rule === "instant_runoff" || rule === "coombs" || rule === "iterated_removal_cl") {
+        const ol = document.createElement("ol");
+        for (const round of details || []) {
+            const li = document.createElement("li");
+            li.appendChild(document.createTextNode("Eliminated: "));
+            appendCandidatesInline(li, round);
+            ol.appendChild(li);
+        }
+        container.appendChild(ol);
+        return;
+    }
+
+    if (rule === "plurality_with_runoff_put") {
+        const ul = document.createElement("ul");
+        for (const pair of details || []) {
+            const li = document.createElement("li");
+            li.appendChild(document.createTextNode("Runoff pair: "));
+            appendCandidatesInline(li, pair);
+            ul.appendChild(li);
+        }
+        container.appendChild(ul);
+        return;
+    }
+
+    if (rule === "baldwin") {
+        const ol = document.createElement("ol");
+        for (const round of details || []) {
+            const li = document.createElement("li");
+            const eliminated = round[0] || [];
+            const scores = round[1] || {};
+            const line = document.createElement("div");
+            line.appendChild(document.createTextNode("Eliminated: "));
+            appendCandidatesInline(line, eliminated);
+            li.appendChild(line);
+            appendScoreList(li, scores);
+            ol.appendChild(li);
+        }
+        container.appendChild(ol);
+        return;
+    }
+
+    if (rule === "strict_nanson" || rule === "weak_nanson") {
+        const ol = document.createElement("ol");
+        for (const round of details || []) {
+            const li = document.createElement("li");
+            const avg = round.avg_borda_score;
+            const eliminated = round.elim_cands || [];
+            const line = document.createElement("div");
+            line.appendChild(document.createTextNode(`Average Borda: ${avg}; Eliminated: `));
+            appendCandidatesInline(line, eliminated);
+            li.appendChild(line);
+            appendScoreList(li, round.borda_scores || {});
+            ol.appendChild(li);
+        }
+        container.appendChild(ol);
+        return;
+    }
+
+    if (rule === "banks") {
+        const ul = document.createElement("ul");
+        for (const chain of details || []) {
+            const li = document.createElement("li");
+            li.appendChild(document.createTextNode("Maximal chain: "));
+            appendCandidatesInline(li, chain);
+            ul.appendChild(li);
+        }
+        container.appendChild(ul);
+        return;
+    }
+
+    if (rule === "stable_voting" || rule === "simple_stable_voting") {
+        const ul = document.createElement("ul");
+        for (const [winner, elimPath] of Object.entries(details || {})) {
+            const li = document.createElement("li");
+            li.appendChild(makeCandidateChip(winner));
+            li.appendChild(document.createTextNode(" elimination path: "));
+            appendCandidatesInline(li, elimPath);
+            ul.appendChild(li);
+        }
+        container.appendChild(ul);
+        return;
+    }
+
+    if (rule === "bucklin" || rule === "simplified_bucklin") {
+        appendScoreList(container, details || {});
+        return;
+    }
+
+    fallbackPre();
+}
+
+function populateRuleExplanation(rule) {
+    const container = document.getElementById("committee-info-modal-rule-explanation-container");
+    const panel = document.getElementById("committee-info-modal-rule-explanation");
+    panel.innerHTML = "";
+    if (!rules[rule].supportsExplanation) {
+        container.style.display = "none";
+        return;
+    }
+    container.style.display = "block";
+    panel.innerText = "Computing explanation...";
+    setTimeout(() => {
+        const explanationFn = explanationFunctionNameForRule(rule);
+        const result = JSON.parse(window.pyodide.runPython(`
+            _pv_rule_explanation_json(${JSON.stringify(explanationFn)})
+        `));
+        if (result.ok) {
+            renderExplanationHtml(rule, result.data, result.text);
+        } else {
+            panel.innerText = "Explanation unavailable for this profile/rule configuration.\n\n" + result.error;
+        }
+    }, 0);
+}
+
 function renderPropertyCell(rule, axiomKey) {
     const cell = document.getElementById("rule-" + rule + "-property-cell");
     if (!cell) {
@@ -105,6 +301,7 @@ function renderPropertyCell(rule, axiomKey) {
 
 function populateCommitteeInfoModal(rule) {
     ensureAxiomRegistry();
+    populateRuleExplanation(rule);
     const list = document.getElementById("committee-info-modal-properties-list");
     list.innerHTML = "";
 

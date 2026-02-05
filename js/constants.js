@@ -40,6 +40,7 @@ export const rules = {
         "category": "Iterative Methods",
         "command": "instant_runoff(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 1
     },
     "instant_runoff_put": {
@@ -56,6 +57,7 @@ export const rules = {
         "category": "Iterative Methods",
         "command": "plurality_with_runoff_put(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 1
     },
     "benham": {
@@ -99,6 +101,7 @@ export const rules = {
         "description": "If there is a majority winner then that candidate is the Coombs winner. If there is no majority winner, then remove all candidates that are ranked last by the greatest number of voters. Continue removing candidates with the most last-place votes until there is a candidate with a majority of first place votes.",
         "command": "coombs(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 1
     },
     "coombs_put": {
@@ -116,6 +119,7 @@ export const rules = {
         "description": "Iteratively remove all candidates with the lowest Borda score until a single candidate remains. If, at any stage, all candidates have the same Borda score, then all (remaining) candidates are winners.",
         "command": "baldwin(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 1
     },
     "baldwin_put": {
@@ -133,6 +137,7 @@ export const rules = {
         "description": "Iteratively remove all candidates with the Borda score strictly below the average Borda score until one candidate remains. If, at any stage, all candidates have the same Borda score, then all (remaining) candidates are winners.",
         "command": "strict_nanson(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 0
     },
     "weak_nanson": {
@@ -142,6 +147,7 @@ export const rules = {
         "description": "Iteratively remove all candidates with Borda score less than or equal the average Borda score until one candidate remains. If, at any stage, all candidates have the same Borda score, then all (remaining) candidates are winners.",
         "command": "weak_nanson(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 0
     },
     "raynaud": {
@@ -169,6 +175,7 @@ export const rules = {
         "description": "Iteratively remove candidates that are Condorcet losers until there are no Condorcet losers.",
         "command": "iterated_removal_cl(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
+        "supportsExplanation": 1,
         "active": 0
     },
     "condorcet": {
@@ -273,6 +280,7 @@ export const rules = {
         "description": "Say that a chain in majority graph is a subset of candidates that is linearly ordered by the majority relation. Then a candidate a if a is the maximum element with respect to the majority relation of some maximal chain in the majority graph.",
         "command": "banks(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
+        "supportsExplanation": 1,
         "active": 0
     },
     "slater": {
@@ -360,6 +368,7 @@ export const rules = {
         "description": "Implementation of  Stable Voting from https://arxiv.org/abs/2108.00542. Stable Voting is a recursive voting method defined as follows: 1.  If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs (a,b) of candidates from largest to smallest value of the margin of a over b such that a is undefeated according to Split Cycle, and declare as Stable Voting winners the candidate(s) a from the earliest pair(s) (a,b) such that a is a Simple Stable Voting winner in the election without b. ",
         "command": "stable_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
+        "supportsExplanation": 1,
         "active": 0,
     },
     "simple_stable_voting": {
@@ -370,6 +379,7 @@ export const rules = {
         "description": "Implementation of Simple Stable Voting from https://arxiv.org/abs/2108.00542. Simple Stable Voting is a recursive voting method defined as follows: 1. If there is only one candidate in the profile, then that candidate is the winner. 2. Order the pairs (a,b) of candidates from largest to smallest value of the margin of a over b, and declare as Simple Stable Voting winners the candidate(s) a from the earliest pair(s) (a,b) such that a is a Simple Stable Voting winner in the election without b. ",
         "command": "simple_stable_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 1,
+        "supportsExplanation": 1,
         "active": 0
     },
     "weighted_covering": {
@@ -533,6 +543,7 @@ export const rules = {
         "description": "If a candidate has a strict majority of first-place votes, then that candidate is the winner. If no such candidate exists, then check the candidates that are ranked first or second. If a candidate has a strict majority of first- or second-place voters, then that candidate is the winner. If no such winner is found move on to the 3rd, 4th, etc. place votes. Return the candidates with the greatest overall score.",
         "command": "bucklin(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 1
     },
     "simplified_bucklin": {
@@ -542,6 +553,7 @@ export const rules = {
         "description": "If a candidate has a strict majority of first-place votes, then that candidate is the winner. If no such candidate exists, then check the candidates that are ranked first or second. If a candidate has a strict majority of first- or second-place voters, then that candidate is the winner. If no such winner is found move on to the 3rd, 4th, etc. place votes.",
         "command": "simplified_bucklin(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
+        "supportsExplanation": 1,
         "active": 0
     },
     "bracket_voting": {

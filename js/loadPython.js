@@ -44,6 +44,24 @@ export async function loadPython() {
         from pref_voting.margin_based_methods import *
         from pref_voting.combined_methods import *
         from pref_voting.other_methods import *
+        from pref_voting.iterative_methods import (
+            instant_runoff_with_explanation,
+            plurality_with_runoff_put_with_explanation,
+            coombs_with_explanation,
+            baldwin_with_explanation,
+            strict_nanson_with_explanation,
+            weak_nanson_with_explanation,
+            iterated_removal_cl_with_explanation,
+        )
+        from pref_voting.c1_methods import banks_with_explanation
+        from pref_voting.margin_based_methods import (
+            stable_voting_with_explanation,
+            simple_stable_voting_with_explanation,
+        )
+        from pref_voting.other_methods import (
+            bucklin_with_explanation,
+            simplified_bucklin_with_explanation,
+        )
         from pref_voting.axioms import axioms_dict
         import io
         import contextlib
@@ -182,6 +200,57 @@ export async function loadPython() {
                 if "Cannot find the plurality scores unless all voters rank a unique candidate in first place." in msg:
                     msg += " This can also happen when the axiom test internally adds tie ballots."
                 return json.dumps({"applicable": False, "error": msg})
+
+        def _pv_rule_explanation_json(explanation_fn_name):
+            fn = globals().get(explanation_fn_name)
+            if fn is None:
+                return json.dumps({"ok": False, "error": f"Explanation function not found: {explanation_fn_name}"})
+
+            def _pv_to_jsonable(obj):
+                if obj is None or isinstance(obj, (bool, int, float, str)):
+                    return obj
+                # numpy scalar support
+                if hasattr(obj, "item"):
+                    try:
+                        return obj.item()
+                    except Exception:
+                        pass
+                if isinstance(obj, dict):
+                    return {str(k): _pv_to_jsonable(v) for k, v in obj.items()}
+                if isinstance(obj, (list, tuple, set)):
+                    return [_pv_to_jsonable(v) for v in obj]
+                if hasattr(obj, "tolist"):
+                    try:
+                        return _pv_to_jsonable(obj.tolist())
+                    except Exception:
+                        pass
+                return repr(obj)
+
+            try:
+                import pprint
+                data = fn(profile, curr_cands=agenda)
+                return json.dumps({
+                    "ok": True,
+                    "data": _pv_to_jsonable(data),
+                    "text": pprint.pformat(data, sort_dicts=False)
+                })
+            except Exception as e:
+                # Many *_with_explanation helpers only support linear Profile,
+                # while the app may currently use ProfileWithTies in weak-order mode.
+                try:
+                    if isinstance(profile, ProfileWithTies) and profile.is_truncated_linear():
+                        linear_profile = profile.to_linear_profile()
+                        if linear_profile is not None:
+                            import pprint
+                            data = fn(linear_profile, curr_cands=agenda)
+                            return json.dumps({
+                                "ok": True,
+                                "data": _pv_to_jsonable(data),
+                                "text": pprint.pformat(data, sort_dicts=False)
+                            })
+                except Exception:
+                    pass
+                return json.dumps({"ok": False, "error": str(e)})
     `);
     populatePropertyDropdown();
     // enable all buttons and inputs

@@ -495,6 +495,21 @@ summary {
     color: #666;
 }
 
+#committee-info-modal-rule-explanation {
+    margin: 0.4em 0 0.8em 0;
+    font-size: 92%;
+}
+
+#committee-info-modal-rule-explanation ul,
+#committee-info-modal-rule-explanation ol {
+    margin: 0.25em 0 0.25em 1.2em;
+    padding: 0;
+}
+
+#committee-info-modal-rule-explanation li {
+    margin: 0.2em 0;
+}
+
 #rule-choice-list {
     list-style-type: none;
     padding: 0;
@@ -815,6 +830,10 @@ ul#probability-distributions-list li {
 
     #committee-info-modal-properties-list .axiom-line.na {
         color: #aaa;
+    }
+
+    #committee-info-modal-rule-explanation {
+        color: #ddd;
     }
 
     .property-cell-na {
