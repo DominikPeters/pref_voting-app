@@ -11,7 +11,7 @@ from pref_voting.c1_methods import smith_set, schwartz_set
 from pref_voting.axiom_helpers import *
 
 
-def has_pareto_violation(edata, vm, verbose=False, strong_Pareto = False):
+def has_pareto_dominance_violation(edata, vm, verbose=False, strong_Pareto = False):
     """
     Returns True if some winner according to vm is Pareto dominated (there is a candidate that is unanimously preferred to the winner).
 
@@ -32,15 +32,19 @@ def has_pareto_violation(edata, vm, verbose=False, strong_Pareto = False):
         for c in edata.candidates: 
             if (strong_Pareto == False and edata.support(c,w)==edata.num_voters) or (strong_Pareto == True and edata.support(c,w)> 0 and edata.support(w,c)==0):
                 if verbose:  
+                    print(f"Pareto violation by {vm}:")
                     edata.display()
                     print(edata.description())
                     vm.display(edata)
-                    print(f"The winner {w} is Pareto dominated by {c}. ")
+                    if not strong_Pareto:
+                        print(f"Every voter ranks {c} higher than the winner {w}.")
+                    else:
+                        print(f"Every voter ranks {c} at least as highly as the winner {w}, and some voter ranks {c} strictly higher than {w}.")
                     print()
                 return True
     return False
 
-def find_all_pareto_violations(edata, vm, verbose=False, strong_Pareto = False):
+def find_all_pareto_dominance_violations(edata, vm, verbose=False, strong_Pareto = False):
     """
     Returns all Pareto-dominated winners.
 
@@ -64,27 +68,32 @@ def find_all_pareto_violations(edata, vm, verbose=False, strong_Pareto = False):
                 pareto_dominated_winners.append((w, c))
     
     if len(pareto_dominated_winners) > 0 and verbose: 
+        print(f"Pareto violation by {vm}:")
         edata.display()
         print(edata.description())
         vm.display(edata)
         for w,c in pareto_dominated_winners:
-            print(f"The winner {w} is Pareto dominated by {c}. ")
+            if not strong_Pareto:
+                print(f"Every voter ranks {c} higher than the winner {w}.")
+            else:
+                print(f"Every voter ranks {c} at least as highly as the winner {w}, and some voter ranks {c} strictly higher than {w}.")
 
     return pareto_dominated_winners
 
-pareto = Axiom(
-    "Pareto Criterion",
-    has_violation = has_pareto_violation,
-    find_all_violations = find_all_pareto_violations, 
+pareto_dominance = Axiom(
+    "Pareto Dominance Criterion",
+    has_violation = has_pareto_dominance_violation,
+    find_all_violations = find_all_pareto_dominance_violations, 
 )
 
-def has_condorcet_winner_violation(edata, vm, verbose=False):
+def has_condorcet_winner_violation(edata, vm, only_resolute=False, verbose=False):
     """
     Returns True if there is a Condorcet winner in edata (a candidate that is majority preferred to every other candidate) that is not the unique winner according to vm.
     
     Args:
         edata (Profile, ProfileWithTies, MajorityGraph, or MarginGraph): the election data.
         vm (VotingMethod): A voting method to test.
+        only_resolute (bool, default=False): If True, only consider profiles in which there is a unique winner according to vm
         verbose (bool, default=False): If a violation is found, display the violation. 
 
     Returns: 
@@ -95,26 +104,33 @@ def has_condorcet_winner_violation(edata, vm, verbose=False):
     cw = edata.condorcet_winner()
 
     ws = vm(edata)
-
+    
+    if only_resolute and len(ws) != 1: 
+        return False
     if cw is not None and ws != [cw]:
-        if verbose: 
-            if type(edata) == Profile or type(edata) == ProfileWithTies: 
-                edata.display_margin_graph()
-            else: 
+        if verbose:
+            print("Violation of Condorcet Winner by", vm.name,"on profile:")
+            if isinstance(edata, (Profile, ProfileWithTies)):
                 edata.display()
-            print(edata.description())
+                print(edata.description())
+                edata.display_margin_graph()
+            else:
+                edata.display()
+                print(edata.description())
+            
             print(f"The Condorcet winner {cw} is not the unique winner: ")
             vm.display(edata)
-        return True 
+        return True
     return False
 
-def find_condorcet_winner_violation(edata, vm, verbose=False):
+def find_all_condorcet_winner_violations(edata, vm, only_resolute=False, verbose=False):
     """
     Returns the Condorcet winner that is not the unique winner according to vm.
     
     Args:
         edata (Profile, ProfileWithTies, MajorityGraph, or MarginGraph): the election data.
         vm (VotingMethod): A voting method to test.
+        only_resolute (bool, default=False): If True, only consider profiles in which there is a unique winner according to vm.
         verbose (bool, default=False): If a violation is found, display the violation. 
 
     Returns: 
@@ -126,13 +142,20 @@ def find_condorcet_winner_violation(edata, vm, verbose=False):
 
     ws = vm(edata)
 
+    if only_resolute and len(ws) != 1: 
+        return list()
+
     if cw is not None and ws != [cw]:
         if verbose: 
-            if type(edata) == Profile or type(edata) == ProfileWithTies: 
-                edata.display_margin_graph()
-            else: 
+            print("Violation of Condorcet Winner by", vm.name,"on profile:")
+            if isinstance(edata, (Profile, ProfileWithTies)):
                 edata.display()
-            print(edata.description())
+                print(edata.description())
+                edata.display_margin_graph()
+            else:
+                edata.display()
+                print(edata.description())
+
             print(f"The Condorcet winner {cw} is not the unique winner: ")
             vm.display(edata)
         return [cw] 
@@ -141,9 +164,8 @@ def find_condorcet_winner_violation(edata, vm, verbose=False):
 condorcet_winner = Axiom(
     "Condorcet Winner",
     has_violation = has_condorcet_winner_violation,
-    find_all_violations = find_condorcet_winner_violation, 
+    find_all_violations = find_all_condorcet_winner_violations, 
 )
-
 
 def has_condorcet_loser_violation(edata, vm, verbose=False):
     """
@@ -164,18 +186,22 @@ def has_condorcet_loser_violation(edata, vm, verbose=False):
     ws = vm(edata)
 
     if cl is not None and cl in ws:
-        if verbose: 
-            if type(edata) == Profile or type(edata) == ProfileWithTies: 
+        if verbose:
+            print("Violation of Condorcet Loser by", vm.name,"on profile:")
+            if type(edata) == Profile or type(edata) == ProfileWithTies:
+                edata.display()
+                print(edata.description())
                 edata.display_margin_graph()
             else: 
                 edata.display()
-            print(edata.description())
+                print(edata.description())
+
             print(f"The Condorcet loser {cl} is an element of the winning set: ")
             vm.display(edata)
         return True 
     return False
 
-def find_condorcet_loser_violation(edata, vm, verbose=False):
+def find_all_condorcet_loser_violations(edata, vm, verbose=False):
     """
     Returns the Condorcet loser (a candidate that loses head-to-head to every other candidate) who is a winner according to vm.  
     
@@ -195,11 +221,15 @@ def find_condorcet_loser_violation(edata, vm, verbose=False):
 
     if cl is not None and cl in ws:
         if verbose: 
+            print("Violation of Condorcet Loser by", vm.name,"on profile:")
             if type(edata) == Profile or type(edata) == ProfileWithTies: 
+                edata.display()
+                print(edata.description())
                 edata.display_margin_graph()
             else: 
                 edata.display()
-            print(edata.description())
+                print(edata.description())
+ 
             print(f"The Condorcet loser {cl} is an element of the winning set: ")
             vm.display(edata)
         return [cl] 
@@ -208,7 +238,7 @@ def find_condorcet_loser_violation(edata, vm, verbose=False):
 condorcet_loser = Axiom(
     "Condorcet Loser",
     has_violation = has_condorcet_loser_violation,
-    find_all_violations = find_condorcet_winner_violation, 
+    find_all_violations = find_all_condorcet_loser_violations, 
 )
 
 def has_smith_violation(edata, vm, verbose=False):
@@ -228,14 +258,19 @@ def has_smith_violation(edata, vm, verbose=False):
     s_set = smith_set(edata)
     ws = vm(edata)
 
-    winners_not_in_smith = [w not in s_set for w in ws]
+    winners_not_in_smith = [w for w in ws if w not in s_set]
     if len(winners_not_in_smith) > 0: 
         if verbose:
-            if type(edata) == Profile or type(edata) == ProfileWithTies: 
+            print("Violation of Smith by", vm.name,"on profile:")
+            if type(edata) == Profile or type(edata) == ProfileWithTies:
+                edata.display()
+                print(edata.description())
                 edata.display_margin_graph()
             else: 
                 edata.display()
-            print(f"The winners that are not in the Smith set: {list_to_string(winners_not_in_smith, edata.cmap)}.")
+                print(edata.description())
+            print("Smith set:", list_to_string(s_set, edata.cmap))
+            print(f"The winners who are not in the Smith set: {list_to_string(winners_not_in_smith, edata.cmap)}")
             vm.display(edata)
         return True 
     return False
@@ -257,14 +292,18 @@ def find_all_smith_violations(edata, vm, verbose=False):
     s_set = smith_set(edata)
     ws = vm(edata)
 
-    winners_not_in_smith = [w not in s_set for w in ws]
+    winners_not_in_smith = [w for w in ws if w not in s_set]
     if len(winners_not_in_smith) > 0: 
         if verbose:
             if type(edata) == Profile or type(edata) == ProfileWithTies: 
+                edata.display()
+                print(edata.description())
                 edata.display_margin_graph()
             else: 
                 edata.display()
-            print(f"The winners that are not in the Smith set: {list_to_string(winners_not_in_smith, edata.cmap)}.")
+                print(edata.description())
+            print("Smith set:", list_to_string(s_set, edata.cmap))
+            print(f"The winners who are not in the Smith set: {list_to_string(winners_not_in_smith, edata.cmap)}")
             vm.display(edata)
         return winners_not_in_smith 
     return list()
@@ -340,7 +379,7 @@ schwartz = Axiom(
 )
 
 dominance_axioms = [
-    pareto, 
+    pareto_dominance, 
     condorcet_winner, 
     condorcet_loser,
     smith,

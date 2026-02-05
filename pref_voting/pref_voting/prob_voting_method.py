@@ -1,5 +1,5 @@
 '''
-    File: social_welfare_function.py
+    File: prob_voting_method.py
     Author: Wes Holliday (wesholliday@berkeley.edu) and Eric Pacuit (epacuit@umd.edu)
     Date: April 14, 2024
     
@@ -8,6 +8,7 @@
 
 import functools
 import numpy as np
+import inspect
 
 class ProbVotingMethod(object): 
     """
@@ -17,11 +18,16 @@ class ProbVotingMethod(object):
         pvm (function): An implementation of a probabilistic voting method. The function should accept any type of profile, and a keyword parameter ``curr_cands`` to find the winner after restricting to ``curr_cands``. 
         name (string): The human-readable name of the social welfare function.
 
+    Returns:
+        A dictionary that represents the probability on the set of candidates.
+
     """
     def __init__(self, pvm, name = None): 
         
         self.pvm = pvm
         self.name = name
+        self.algorithm = None
+
         functools.update_wrapper(self, pvm)   
 
     def __call__(self, edata, curr_cands = None, **kwargs):
@@ -73,6 +79,19 @@ class ProbVotingMethod(object):
         """Set the name of the social welfare function."""
 
         self.name = new_name
+
+    def set_algorithm(self, algorithm):
+        """
+        Set the algorithm for the voting method if 'algorithm' is an accepted keyword parameter.
+
+        Args:
+            algorithm: The algorithm to set for the voting method.
+        """
+        params = inspect.signature(self.pvm).parameters
+        if 'algorithm' in params and params['algorithm'].kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]:
+            self.algorithm = algorithm
+        else:
+            raise ValueError(f"The method {self.name} does not accept 'algorithm' as a parameter.")
 
     def __str__(self): 
         return f"{self.name}"

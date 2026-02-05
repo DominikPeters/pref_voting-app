@@ -22,7 +22,7 @@ Invariance Axioms
 
 ```
 
-## Upward Block Preservation
+## Downward Block Preservation
 
 ```{eval-rst}
 
@@ -59,5 +59,25 @@ Invariance Axioms
 .. autofunction:: pref_voting.invariance_axioms.has_downward_homogeneity_violation
 
 .. autofunction:: pref_voting.invariance_axioms.find_all_downward_homogeneity_violations
+
+```
+
+## Preferential Equality
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.invariance_axioms.has_preferential_equality_violation
+
+.. autofunction:: pref_voting.invariance_axioms.find_all_preferential_equality_violations
+
+```
+
+## Tiebreaking Compensation
+
+```{eval-rst}
+
+.. autofunction:: pref_voting.invariance_axioms.has_tiebreaking_compensation_violation
+
+.. autofunction:: pref_voting.invariance_axioms.find_all_tiebreaking_compensation_violations
 
 ```

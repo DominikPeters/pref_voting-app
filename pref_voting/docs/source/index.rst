@@ -18,10 +18,64 @@ The library is developed by Wes Holliday (http://wesholliday.net) and Eric Pacui
 
 - W. Zwicker (2016). `Introduction to the theory of voting <https://www.cambridge.org/core/books/abs/handbook-of-computational-social-choice/introduction-to-the-theory-of-voting/7C7A70249A972A4AC56E8938AD27464E>`_, Handbook of Computational Social Choice.
 
+How to cite
+------------------------
+
+If you would like to acknowledge our work in a scientific paper,
+please use the following citation:
+
+Wesley H. Holliday and Eric Pacuit (2025). pref_voting: The Preferential Voting Tools package for Python. Journal of Open Source Software, 10(105), 7020. https://doi.org/10.21105/joss.07020
+
+**Bibtex**:
+
+.. code-block:: bibtex
+
+   @article{HollidayPacuit2025, 
+     author = {Wesley H. Holliday and Eric Pacuit}, 
+     title = {pref_voting: The Preferential Voting Tools package for Python}, 
+     journal = {Journal of Open Source Software},
+     year = {2025}, 
+     publisher = {The Open Journal}, 
+     volume = {10}, 
+     number = {105}, 
+     pages = {7020}, 
+     doi = {10.21105/joss.07020}
+   }
+
+Axiom Satisfaction/Violation Database
+------------------------
+
+We maintain a database showing whether various voting methods satisfy or violate various axioms: 
+
+* `Dominance Axioms - Profile <axiom_violations_dominance_axioms_profile.html>`_
+
+* `Dominance Axioms - Profile with Ties <axiom_violations_dominance_axioms_profilewithties.html>`_
+
+* `Invariance Axioms - Profile <axiom_violations_invariance_axioms_profile.html>`_
+
+* `Invariance Axioms - Profile with Ties <axiom_violations_invariance_axioms_profilewithties.html>`_
+
+* `Monotonicity Axioms - Profile <axiom_violations_monotonicity_axioms_profile.html>`_
+
+* `Monotonicity Axioms - Profile with Ties <axiom_violations_monotonicity_axioms_profilewithties.html>`_
+
+* `Strategic Axioms - Profile <axiom_violations_strategic_axioms_profile.html>`_
+
+* `Strategic Axioms - Profile with Ties <axiom_violations_strategic_axioms_profilewithties.html>`_
+
+* `Variable Candidate Axioms - Profile <axiom_violations_variable_candidate_axioms_profile.html>`_
+
+* `Variable Candidate Axioms - Profile with Ties <axiom_violations_variable_candidate_axioms_profilewithties.html>`_
+
+* `Variable Voter Axioms - Profile <axiom_violations_variable_voter_axioms_profile.html>`_
+
+* `Variable Voter Axioms - Profile with Ties <axiom_violations_variable_voter_axioms_profilewithties.html>`_
+
+
 Related resources
 ------------------------
 
-- abcvoting (https://abcvoting.readthedocs.io/) - Python library of approval based committee voting rules.
+- VoteKit (https://votekit.readthedocs.io/) - A Python package developed by the MGGG Redistricting Lab (https://mggg.org/) designed to facilitate the study of different election methods.
 
 - prefsampling (https://comsoc-community.github.io/prefsampling/) - A Python library for sampling from preference profiles with respect to different probability models.
 
@@ -31,7 +85,12 @@ Related resources
 
 - https://voting.ml/ - An online tool to study *maximal lotteries* (a Condorcet consistent probabilistic voting method).
 
+- abcvoting (https://abcvoting.readthedocs.io/) - Python library of approval based committee voting rules.
+
 - Votelib (https://github.com/simberaj/votelib) - Another Python package that implements a number of voting methods (includes multiwinner methods and some grading systems such as Approval Voting and Majority Judgement).
+
+
+See [https://comsoc-community.org/tools](https://comsoc-community.org/tools) for an overivew of tools for computational social choice.
 
 Contents
 -----------------
@@ -50,6 +109,7 @@ Contents
    ballots
    profiles
    profiles_with_ties
+   pairwise_profiles
    grade_profiles
    utility_profiles
    spatial_profiles
@@ -76,10 +136,11 @@ Contents
    margin_based_methods
    combined_methods
    other_methods
+   proportional_methods
    probabilistic_methods
+   stochastic_methods
    utility_methods
    grade_methods
-   
 
 .. toctree::
    :maxdepth: 2
@@ -92,6 +153,7 @@ Contents
    strategic_axioms
    variable_voter_axioms
    variable_candidate_axioms
+   swf_axioms
 
 .. toctree::
    :maxdepth: 2

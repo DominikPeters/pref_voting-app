@@ -224,7 +224,7 @@ class Profile(object):
         Returns a list of all the type of rankings in the profile as a list of tuples.
         """
         return list(set([tuple(r) for r in self._rankings]))
-
+    
     @property
     def rankings(self): 
         """
@@ -514,6 +514,31 @@ class Profile(object):
         orig_names = {v:k  for k,v in new_names.items()}
         return Profile([[new_names[c] for c in r] for r in updated_rankings], rcounts=self._rcounts, cmap=self.cmap), orig_names
     
+    def apply_cand_permutation(self, perm):
+        r"""Apply a permutation of the candidates to all rankings in the profile.
+        :param perm: Dictionary mapping candidates to candidates, which must be a bijection
+        :type perm: dict[int: int]
+        :returns: A new Profile with rankings transformed according to the permutation
+        :rtype: Profile
+        :Example:
+        .. code-block:: python
+            prof = Profile([[2, 0, 1]], rcounts = [1])
+            new_prof = prof.apply_cand_permutation({0:1, 1:2, 2:0})
+            # new_prof has ranking [0, 1, 2]
+        .. note:: The permutation must be a bijection over all candidates in the profile.
+        """
+        # Validate permutation is bijective and uses valid candidates
+        assert all(c in self.candidates for c in perm.keys()), "All keys must be valid candidates"
+        assert all(c in self.candidates for c in perm.values()), "All values must be valid candidates"
+        assert len(set(perm.keys())) == len(set(perm.values())) == len(self.candidates), \
+            "Permutation must be a bijection on the set all candidates"
+
+        # Create new rankings by applying permutation
+        new_rankings = [[perm[c] for c in ranking] for ranking in self._rankings]
+
+        # Create new profile with transformed rankings
+        return Profile(new_rankings, rcounts=self._rcounts, cmap=self.cmap)
+    
     def anonymize(self): 
         """
         Return a profile which is the anonymized version of this profile. 
@@ -546,6 +571,87 @@ class Profile(object):
             rcounts=list(rcounts), 
             candidates = self.candidates, 
             cmap=self.cmap)
+    
+    def randomly_truncate(self, truncation_prob_list = None):
+        """Given a truncation_prob_list that determines the probability that a ballot will be truncated at each position,
+        return the randomly truncated profile. 
+        
+        If truncation_prob_list is None, then the truncation probability distribution is uniform."""
+
+        if truncation_prob_list is None:
+            truncation_prob_list = [1/self.num_cands]*self.num_cands
+
+        truncated_ballots = []
+
+        for ranking, count in zip(*self.rankings_counts):
+            for ranking_instance in range(count):
+                random_number_of_cands_ranked = np.random.choice(range(1,self.num_cands+1), p=truncation_prob_list)
+                truncated_ranking = ranking[:random_number_of_cands_ranked]
+                new_ballot = {cand: ranking[cand] for cand in truncated_ranking}
+                truncated_ballots.append(new_ballot)
+
+        return ProfileWithTies(truncated_ballots)
+    
+    def to_utility_profile(self, seed=None): 
+        """Returns the profile as a UtilityProfile using the function Utility.from_linear_profile to generate the utility function.  
+        So, it assigns a random utility that represents the ranking. 
+        """
+
+        from pref_voting.mappings import Utility
+        from pref_voting.utility_profiles import UtilityProfile
+        
+        return UtilityProfile(
+            [Utility.from_linear_ranking(r, seed=(seed + idx if seed is not None else None)) for idx,r in enumerate(self.rankings)]
+        )
+    
+    def replace_rankings(
+            self, 
+            old_ranking, 
+            new_ranking, 
+            num, 
+            use_extended_strict_preference_for_comparison = False): 
+        """
+
+        Create a new profile by replacing num ballots matching old_ranking with new_ranking.
+
+        If num is greater than the number of ballots matching old_ranking, then all ballots matching old_ranking are replaced with new_ranking.
+        
+        """
+        
+        ranking_types, ranking_counts = self.rankings_counts
+            
+        same_ranking = lambda r1, r2: list(r1) == list(r2)
+
+        new_ranking_types = []
+        new_ranking_counts = []
+
+        current_num = 0
+        for r, c in zip(ranking_types, ranking_counts):
+            
+            if current_num < num and same_ranking(r, old_ranking):
+                if c > num - current_num:
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(num - current_num)
+                    new_ranking_types.append(old_ranking)
+                    new_ranking_counts.append(c - (num - current_num))
+                    current_num = num
+                elif c == num - current_num and same_ranking(r, old_ranking):
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(num - current_num)
+                    current_num = num
+                elif c < num - current_num:
+                    new_ranking_types.append(new_ranking)
+                    new_ranking_counts.append(c)
+                    current_num += c
+            else:
+                new_ranking_types.append(r)
+                new_ranking_counts.append(c)
+
+        new_prof = Profile(new_ranking_types, new_ranking_counts, cmap=self.cmap)
+        
+        assert self.num_voters == new_prof.num_voters, "Problem: the number of voters is not the same in the new profile!"
+        
+        return new_prof
     
     def to_latex(self, cmap = None, curr_cands = None):
         """Returns a string describing the profile (restricted to ``curr_cands``) as a LaTeX table (use the provided ``cmap`` or the ``cmap`` associated with the profile).
@@ -599,9 +705,14 @@ class Profile(object):
         Returns a string describing the profile.
         """
         rs, cs = self.rankings_counts
-        return f"Profile({[list(r) for r in rs]}, rcounts={[int(c) for c in cs]}, cmap={self.cmap})"
+        return f"Profile({[list([int(c) for c in r]) for r in rs]}, rcounts={[int(c) for c in cs]}, cmap={self.cmap})"
 
-    def display(self, cmap=None, style="pretty", curr_cands=None):
+    def display(
+            self, 
+            cmap=None, 
+            style="pretty", 
+            curr_cands=None,
+            order_by_counts=False):
         """Display a profile (restricted to ``curr_cands``) as an ascii table (using tabulate).
 
         :param cmap: the candidate map to use (overrides the cmap associated with this profile)
@@ -626,7 +737,13 @@ class Profile(object):
         
         rankings = self._rankings if curr_cands is None else _find_updated_profile(self._rankings, np.array([c for c in self.candidates if c not in curr_cands]), len(self.candidates))
 
-        print(tabulate([[cmap[c] for c in cs] for cs in rankings.transpose()], self._rcounts, tablefmt=style))        
+        if order_by_counts: 
+            rankings, rcounts = zip(*sorted(zip(rankings, self._rcounts), key=lambda x: x[1], reverse=True))
+            rankings = np.array(rankings)
+        else: 
+            rcounts = self._rcounts
+
+        print(tabulate([[cmap[c] for c in cs] for cs in rankings.transpose()], rcounts, tablefmt=style))        
 
     def to_preflib_instance(self):
         """
@@ -715,3 +832,25 @@ class Profile(object):
         
         return tabulate([[self.cmap[c] for c in cs] for cs in self._rankings.transpose()], self._rcounts, tablefmt="pretty")    
 
+    def __getstate__(self):
+        """Return the state of the object for pickling."""
+        state = self.__dict__.copy()
+        # Remove derived attributes that can be recomputed
+        del state['_ranks']
+        del state['_tally']
+        del state['cand_to_cindex']
+        del state['cindex_to_cand']
+        return state
+
+    def __setstate__(self, state):
+        """Restore the state of the object from pickling."""
+        self.__dict__.update(state)
+        # Recompute derived attributes
+        self._ranks = np.array([[np.where(_r == c)[0][0] + 1 
+                                 for c in self.candidates] 
+                                 for  _r in self._rankings])
+        self._tally = np.array([[_support(self._ranks, self._rcounts, c1, c2) 
+                                 for c2 in self.candidates] 
+                                 for c1 in self.candidates ])
+        self.cand_to_cindex = lambda c: c
+        self.cindex_to_cand = lambda i: i

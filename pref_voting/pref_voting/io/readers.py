@@ -12,6 +12,10 @@ from pref_voting.spatial_profiles import SpatialProfile
 from preflibtools.instances import OrdinalInstance
 import os
 import csv
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 import json
 
 def abif_to_profile(filename):
@@ -177,7 +181,7 @@ def preflib_to_profile(
 
     rankings = []
     rcounts = []
-    cmap = {c:str(c) for c in range(instance.num_alternatives)}
+    cmap = {c:str(c) for c in instance.alternatives_name.keys()}
 
     if not as_linear_profile:
 
@@ -199,8 +203,8 @@ def preflib_to_profile(
             rcounts.append(instance.multiplicity[order])
 
         return ProfileWithTies(rankings, 
-                       rcounts=rcounts,
-                       cmap=cmap)
+                               rcounts=rcounts,
+                               cmap=cmap)
 
     elif as_linear_profile: 
         
@@ -247,57 +251,69 @@ def csv_to_profile(
         if csv_format == "rank_columns":
             items_to_skip = items_to_skip if items_to_skip is not None else ["skipped"]
             ranks = []
-            rank_columns = []
 
-            with open(filename, 'r') as file:
-                reader = csv.DictReader(file)
-                for col in reader.fieldnames:
-                    if col.startswith('rank') or col.startswith('Rank'):
-                        rank_columns.append(col)
+            if pd is not None:
+                df = pd.read_csv(filename, low_memory=False)
+                rank_columns = [col for col in df.columns if col.startswith('rank') or col.startswith('Rank')]
 
-                cand_names = set()
-                for row in reader:
-                    for col in rank_columns:
-                        cand_names.add(str(row[col]))
-
-                cand_names = [value for value in cand_names if value not in items_to_skip]
+                # Get unique values from these columns, excluding skipped items.
+                cand_names = pd.unique(df[rank_columns].values.ravel('K'))
+                cand_names = [str(value) for value in cand_names if value not in items_to_skip]
 
                 if 'writein' in cand_names:
                     cands = list(set([c for c in sorted(cand_names) if c != 'writein'])) + ['writein']
-                else:
+                else: 
                     cands = sorted(list(set(cand_names)))
-
-                if len(cands) == 0:
+                if len(cands) == 0: 
                     print("No candidates found in file", filename)
-                    return None
-
-                cmap = {cidx: c for cidx, c in enumerate(cands)}
-                cand_to_cidx = {c: cidx for cidx, c in enumerate(cands)}
+                cand_to_cidx = {c:cidx for cidx,c in enumerate(cands)}
 
                 rank_str_to_rank = lambda rank_str: int(rank_str[4:].strip())
-
-                file.seek(0)  # Reset the file pointer to the beginning
-                next(reader)  # Skip the header row
-
-                for row in reader:
+                for _, row in df.iterrows():
                     ballot_dict = {}
                     for rank in rank_columns:
                         candidate = str(row[rank])
                         if candidate not in items_to_skip:
                             ballot_dict[cand_to_cidx[candidate]] = rank_str_to_rank(rank)
+                    ballot_dict = {cand_type(c) if cand_type is not None else c:r for c,r in ballot_dict.items()}
+                    ranks.append(ballot_dict)
+            else:
+                with open(filename, mode='r', newline='') as file:
+                    reader = csv.DictReader(file)
+                    rank_columns = [col for col in (reader.fieldnames or []) if col.startswith('rank') or col.startswith('Rank')]
+                    rows = list(reader)
 
-                    ballot_dict = {cand_type(c) if cand_type is not None else c: r
-                                for c, r in ballot_dict.items()}
+                cand_names = sorted({
+                    str(row[col])
+                    for row in rows
+                    for col in rank_columns
+                    if str(row[col]) not in items_to_skip
+                })
+
+                if 'writein' in cand_names:
+                    cands = [c for c in cand_names if c != 'writein'] + ['writein']
+                else:
+                    cands = cand_names
+                if len(cands) == 0:
+                    print("No candidates found in file", filename)
+                    return None
+                cand_to_cidx = {c:cidx for cidx,c in enumerate(cands)}
+                rank_str_to_rank = lambda rank_str: int(rank_str[4:].strip())
+                for row in rows:
+                    ballot_dict = {}
+                    for rank in rank_columns:
+                        candidate = str(row[rank])
+                        if candidate not in items_to_skip:
+                            ballot_dict[cand_to_cidx[candidate]] = rank_str_to_rank(rank)
+                    ballot_dict = {cand_type(c) if cand_type is not None else c:r for c,r in ballot_dict.items()}
                     ranks.append(ballot_dict)
 
-                cmap = {cand_to_cidx[c]: str(c) for c in cands}
-                prof = ProfileWithTies(ranks, cmap=cmap)
-
-                if as_linear_profile:
-                    prof = prof.to_linear_profile()
-                    assert prof is not None, "The profile could not be converted to a Profile."
-
-                return prof
+            cmap = {cand_to_cidx[c]:str(c) for c in cands}
+            prof = ProfileWithTies(ranks, cmap=cmap)
+            if as_linear_profile:
+                prof = prof.to_linear_profile() 
+                assert prof is not None, "The profile could not be converted to a Profile."
+            return prof
         
         elif csv_format == "candidate_columns":             
             with open(filename, mode='r') as file:

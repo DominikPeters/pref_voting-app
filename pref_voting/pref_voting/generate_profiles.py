@@ -2,7 +2,7 @@
     File: gen_profiles.py
     Author: Wes Holliday (wesholliday@berkeley.edu) and Eric Pacuit (epacuit@umd.edu)
     Date: December 7, 2020
-    Updated: February 16, 2024
+    Updated: May 25, 2025
     
     Functions to generate profiles
 
@@ -15,14 +15,24 @@ from pref_voting.generate_utility_profiles import linear_utility
 import numpy as np 
 import math
 import random
+try:
+    from scipy.stats import gamma
+except ImportError:
+    gamma = None
 from itertools import permutations
-from pref_voting.helper import weak_compositions
+from pref_voting.helper import weak_compositions, weak_orders
 
 from pref_voting.profiles_with_ties import ProfileWithTies
-# from ortools.linear_solver import pywraplp
+try:
+    from ortools.linear_solver import pywraplp
+except ImportError:
+    pywraplp = None
 from prefsampling.ordinal import impartial, impartial_anonymous, urn, plackett_luce, didi, stratification, single_peaked_conitzer, single_peaked_walsh, single_peaked_circle, single_crossing, euclidean, mallows
 
-# from prefsampling.core.euclidean import EuclideanSpace
+try:
+    from prefsampling.core.euclidean import EuclideanSpace
+except ImportError:
+    EuclideanSpace = None
 from collections import Counter
 
 # ############
@@ -326,14 +336,16 @@ def get_rankings(num_candidates, num_voters, **kwargs):
                        alpha,
                        seed=seed)
         
-    # elif probmodel == "URN-R":
+    elif probmodel == "URN-R":
+        if gamma is None:
+            raise ImportError("URN-R requires scipy, which is not available in this environment.")
         
-    #     rng = np.random.default_rng(seed)
-    #     alpha = round(math.factorial(num_candidates) * gamma.rvs(0.8, random_state=rng))
-    #     rankings = urn(num_voters,
-    #                    num_candidates,
-    #                    alpha,
-    #                    seed=seed)
+        rng = np.random.default_rng(seed)
+        alpha = round(math.factorial(num_candidates) * gamma.rvs(0.8, random_state=rng))
+        rankings = urn(num_voters,
+                       num_candidates,
+                       alpha,
+                       seed=seed)
         
     elif probmodel == "plackett_luce":
         
@@ -397,6 +409,8 @@ def get_rankings(num_candidates, num_voters, **kwargs):
                                    seed=seed) 
         
     elif probmodel == "euclidean":
+        if EuclideanSpace is None:
+            raise ImportError("Euclidean model generation requires prefsampling.core.euclidean.")
         
         euclidean_spaces = {
             "gaussian_ball": EuclideanSpace.GAUSSIAN_BALL,
@@ -506,6 +520,9 @@ def generate_profile_with_groups(
 
     return profs[0] if num_profiles == 1 else profs
 
+####
+# Enumerating profiles
+####
 
 def enumerate_anon_profile(num_cands, num_voters):
     """A generator that enumerates all anonymous profiles with num_cands candidates and num_voters voters.
@@ -522,11 +539,51 @@ def enumerate_anon_profile(num_cands, num_voters):
     num_ballot_types = len(ballot_types)
 
     for comp in weak_compositions(num_voters, num_ballot_types):
-        yield Profile(ballot_types, rcounts = comp)
+        instantiated_ballot_types = [ballot_types[idx] for idx, i in enumerate(comp) if i != 0]
+        nonzerocomp = [i for i in comp if i != 0]
+        yield Profile(instantiated_ballot_types, rcounts = nonzerocomp)
+
+def canonical_ballot_multiset(profile: Profile) -> tuple:
+    """
+    Lexicographically minimal multiset of (ranking, count) pairs across
+    all candidate permutations.
+    """
+    m = profile.num_cands
+    rankings, counts = profile.rankings_counts
+    counts = counts.astype(int)
+    
+    best = None
+    
+    # For each ranking that could potentially be the "canonical" one (0,1,2,...)
+    for r in rankings:
+        # Find the permutation that maps r to (0,1,2,...,m-1)
+        perm = {int(r[i]): i for i in range(m)}
+        
+        # Apply this inverse permutation to all rankings
+        canon = tuple(sorted(
+            (tuple(perm[c] for c in ranking.tolist()), int(k))
+            for ranking, k in zip(rankings, counts)
+        ))
+        
+        if best is None or canon < best:
+            best = canon
+    
+    return best
+
+def enumerate_anon_neutral_profile(num_cands: int, num_voters: int):
+    """
+    A generator that yields one representative per neutrality-orbit of anonymous profiles.
+    """
+    seen = set()
+    for prof in enumerate_anon_profile(num_cands, num_voters):
+        key = canonical_ballot_multiset(prof)
+        if key not in seen:
+            seen.add(key)
+            yield prof
 
 
 def enumerate_anon_profile_with_ties(num_cands, num_voters):
-    """A generator that enumerates all anonymous profiles--allowing ties and omissions in ballots--with num_cands candidates and num_voters voters
+    """A generator that enumerates all anonymous profiles--allowing ties in ballots--with num_cands candidates and num_voters voters
 
     Args:
         num_cands (int): Number of candidates.
@@ -540,7 +597,55 @@ def enumerate_anon_profile_with_ties(num_cands, num_voters):
     num_ballot_types = len(ballot_types)
 
     for comp in weak_compositions(num_voters, num_ballot_types):
-        yield ProfileWithTies(ballot_types, rcounts = comp)
+        instantiated_ballot_types = [ballot_types[idx] for idx, i in enumerate(comp) if i != 0]
+        nonzerocomp = [i for i in comp if i != 0]
+        yield ProfileWithTies(instantiated_ballot_types, rcounts = nonzerocomp)
+
+def _weakorder_to_levels(order):
+    """Convert a weak order dict -> tuple of rank-levels."""
+    if not order:
+        return tuple()
+    max_rank = max(order.values())
+    return tuple(
+        tuple(sorted(c for c, r in order.items() if r == lev))
+        for lev in range(max_rank + 1)
+    )
+
+def _canonical_multiset_with_ties(profile):
+    """Canonical key for a *ProfileWithTies* under candidate permutations."""
+    m = profile.num_cands
+    ballots, counts = profile.rankings_counts
+    ballots = list(ballots)
+    counts  = [int(k) for k in counts]
+
+    best = None
+    for perm in permutations(range(m)):
+        relabel = dict(zip(range(m), perm))
+
+        canon = tuple(sorted(
+            (
+                _weakorder_to_levels(
+                    {relabel[c]: r for c, r in (
+                        ballot if isinstance(ballot, dict) else ballot.rmap
+                    ).items()}
+                ),
+                k,
+            )
+            for ballot, k in zip(ballots, counts)
+        ))
+        if best is None or canon < best:
+            best = canon
+    return best
+
+def enumerate_anon_neutral_profile_with_ties(num_cands, num_voters):
+    """A generator that yields one representative per neutrality-orbit of anonymous profiles allowing ties.
+    """
+    seen = set()
+    for prof in enumerate_anon_profile_with_ties(num_cands, num_voters):
+        key = _canonical_multiset_with_ties(prof)
+        if key not in seen:
+            seen.add(key)
+            yield prof
 
 
 ####
@@ -648,6 +753,9 @@ def minimal_profile_from_edge_order(cands, edge_order):
     Returns:
         Profile: a profile whose ordinal margin graph has the given edge order
     """
+
+    if pywraplp is None:
+        raise ImportError("minimal_profile_from_edge_order requires ortools.")
 
     solver = pywraplp.Solver.CreateSolver("SAT")
 

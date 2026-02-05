@@ -1,4 +1,5 @@
 .DS_Store
+*/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -165,4 +166,10 @@ docs/.DS_Store
 .DS_Store
 docs/.DS_Store
 .DS_Store
+docs/.DS_Store
+.DS_Store
+docs/.DS_Store
+.DS_Store
+.DS_Store
+docs/.DS_Store
 docs/.DS_Store

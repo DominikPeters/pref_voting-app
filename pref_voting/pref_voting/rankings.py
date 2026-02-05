@@ -63,6 +63,15 @@ class Ranking(object):
         """Returns a sorted list of the candidates that are ranked."""
         return sorted(list(self.rmap.keys()))
 
+    def num_ranked_candidates(self): 
+        """Returns the number of ranked candidates"""
+        return len(self.cands)
+    
+    def is_bullet_vote(self): 
+        """Return True if the ranking is a bullet vote (a vote for a single candidate)"""
+
+        return len(self.first()) == 1 and len(self.ranks) == 2
+
     def cands_at_rank(self, r):
         """Returns a list of the candidates that are assigned the rank ``r``."""
         return [c for c in self.rmap.keys() if self.rmap[c] == r]
@@ -152,6 +161,11 @@ class Ranking(object):
         """Return True when the ranking has a tie."""
         return len(list(set(self.rmap.values()))) != len(list(self.rmap.values()))
 
+    def is_tied(self, cands):
+        """Return True if the ranking contains a tie between the candidates in cands
+        """        
+        return set(self.cands_at_rank(self.rmap[cands[0]])) == set(cands)
+
     def is_linear(self, num_cands):
         """Return True when the ranking is a linear order of ``num_cands`` candidates. 
         """
@@ -231,7 +245,7 @@ class Ranking(object):
         """
         self.rmap = {c: self.ranks.index(r) + 1 for c, r in self.rmap.items()}
 
-    ## set preferences
+
     def AAdom(self, c1s, c2s, use_extended_preferences=False):
         """
         Returns True if every candidate in ``c1s`` is weakly preferred to every candidate in ``c2s``. If ``use_extended_preferences`` is True, then use the extended weak preference.
@@ -275,6 +289,62 @@ class Ranking(object):
         """
         return tuple([tuple(self.cands_at_rank(r)) for r in self.ranks])
     
+    @classmethod
+    def from_indiff_list(cls, indiff_list, cmap=None): 
+        """
+        Returns a ranking from a list of indifference classes. 
+        """
+        rmap = dict()
+        for r, cands in enumerate(indiff_list): 
+            for c in cands: 
+                rmap[c] = r + 1
+        return Ranking(rmap, cmap=cmap)
+    
+    @classmethod
+    def from_linear_order(cls, linear_order, cmap=None): 
+        """
+        Returns a ranking from a list of indifference classes. 
+        """
+        rmap = dict()
+        for r, c in enumerate(linear_order): 
+            rmap[c] = r + 1
+        return Ranking(rmap, cmap=cmap)
+
+    def to_weak_order(self, candidates):
+        """
+        Returns the ranking as a weak order over the candidates in the list ``candidates``.
+        """
+        max_rank = max(self.ranks)
+        new_ranks = self.rmap
+        for c in candidates:
+            if not self.is_ranked(c):
+                new_ranks[c] = max_rank + 1
+
+        new_cmap = {c: self.cmap[c] if c in self.cmap.keys() else f'{c}' for c in candidates}
+        return Ranking(new_ranks, cmap=new_cmap)
+    
+    def reverse(self): 
+        """
+        Returns the reverse of the ranking. 
+        """
+        r =  Ranking({c: -r for c, r in self.rmap.items()}, cmap=self.cmap)
+        r.normalize_ranks()
+        return r
+    
+    def break_tie(self, lin_order):
+        """
+        Given a linear order, break the tie in the ranking by using the linear order.   It is assumed that lin_order is a tuple of candidates such that are a tie according to the ranking. If not, then the function will return the same ranking. 
+        """
+
+        new_indiff_list = []
+        for cs in self.to_indiff_list():
+            if set(cs) == set(lin_order):
+                for c in lin_order: 
+                    new_indiff_list.append((c,))
+            else:
+                new_indiff_list.append(cs)
+        return Ranking.from_indiff_list(new_indiff_list, cmap=self.cmap)
+
     def display(self, cmap = None): 
         """
         Display the ranking vertically as a column of a table. 
@@ -367,7 +437,9 @@ class Ranking(object):
                 return False
         return True
 
-
+    def __hash__(self): 
+        return hash(tuple(self.to_indiff_list()))
+    
 def break_ties_alphabetically(ranking):
     """Break ties in the ranking alphabetically.
 

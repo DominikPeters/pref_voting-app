@@ -8,8 +8,16 @@
 '''
 
 import functools
+import inspect
 import numpy as np
 import random
+import json
+from pref_voting.voting_method_properties import VotingMethodProperties
+from filelock import FileLock, Timeout
+import importlib.resources
+
+import glob
+import os
 
 class VotingMethod(object): 
     """
@@ -18,19 +26,72 @@ class VotingMethod(object):
     Args:
         vm (function): An implementation of a voting method. The function should accept a Profile, ProfileWithTies, MajorityGraph, and/or MarginGraph, and a keyword parameter ``curr_cands`` to find the winner after restricting to ``curr_cands``. 
         name (string): The Human-readable name of the voting method.
+        properties (VotingMethodProperties): The properties of the voting method.
+        input_types (list): The types of input that the voting method can accept.
 
     """
-    def __init__(self, vm, name = None): 
+    def __init__(self, 
+                 vm, 
+                 name=None, 
+                 input_types=None, 
+                 skip_registration=False,                properties_file=None): 
         
         self.vm = vm
         self.name = name
+
+        # Determine the path to the properties file
+        if properties_file is None:
+
+            properties_file = importlib.resources.files('pref_voting') / 'data' / 'voting_methods_properties.json'
+
+
+        # Get the properties of the voting method
+        try:
+            with open(properties_file, "r") as file:
+                vm_props = json.load(file)
+        except FileNotFoundError:
+            vm_props = {}
+        except Exception as e:
+            print(f"An error occurred while opening the properties file: {e}")
+            vm_props = {}
+
+        if name in vm_props:
+            properties = VotingMethodProperties(**vm_props[name])
+        else:
+            properties = VotingMethodProperties()
+
+        self.properties = properties
+        self.input_types = input_types
+        self.skip_registration = skip_registration
+        self.algorithm = None
+
         functools.update_wrapper(self, vm)   
 
     def __call__(self, edata, curr_cands = None, **kwargs):
-
+        
         if (curr_cands is not None and len(curr_cands) == 0) or len(edata.candidates) == 0: 
             return []
-        return self.vm(edata, curr_cands = curr_cands, **kwargs)
+        
+        # Set the algorithm from self.algorithm if it's not already provided in kwargs
+        if 'algorithm' not in kwargs and self.algorithm is not None:
+            params = inspect.signature(self.vm).parameters
+            if 'algorithm' in params and params['algorithm'].kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]:
+                kwargs['algorithm'] = self.algorithm
+
+        return self.vm(edata, curr_cands=curr_cands, **kwargs)
+
+    def set_algorithm(self, algorithm):
+        """
+        Set the algorithm for the voting method if 'algorithm' is an accepted keyword parameter.
+
+        Args:
+            algorithm: The algorithm to set for the voting method.
+        """
+        params = inspect.signature(self.vm).parameters
+        if 'algorithm' in params and params['algorithm'].kind in [inspect.Parameter.KEYWORD_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD]:
+            self.algorithm = algorithm
+        else:
+            raise ValueError(f"The method {self.name} does not accept 'algorithm' as a parameter.")
     
     def choose(self, edata, curr_cands = None): 
         """
@@ -52,7 +113,7 @@ class VotingMethod(object):
         """
         Display the winning set of candidates.
         """
- 
+
         cmap = cmap if cmap is not None else edata.cmap
 
         ws = self.__call__(edata, curr_cands = curr_cands, **kwargs)
@@ -68,15 +129,147 @@ class VotingMethod(object):
 
         self.name = new_name
 
+    def add_property(self, prop, value):
+        """Add a property to the voting method."""
+
+        setattr(self.properties, prop, value)
+
+    def remove_property(self, prop):
+        """Remove a property from the voting method."""
+
+        delattr(self.properties, prop)
+
+    def load_properties(self, filename=None):
+        """Load the properties of the voting method from a JSON file."""
+        
+        # Determine the path to the properties file
+        if filename is None:
+            filename = importlib.resources.files('pref_voting') / 'data' / 'voting_methods_properties.json'
+        lock = FileLock(f"{filename}.lock")
+        with lock:
+            try:
+                with open(filename, 'r') as file:
+                    vm_props = json.load(file)
+            except FileNotFoundError:
+                vm_props = {}
+
+            if self.name in vm_props:
+                self.properties = VotingMethodProperties(**vm_props[self.name])
+            else:
+                self.properties = VotingMethodProperties()
+
+    def has_property(self, prop):
+        """Check if the voting method has a property."""
+
+        return self.properties[prop]
+    
+    def get_properties(self): 
+        """Return the properties of the voting method."""
+        
+        return {
+            "satisfied": [prop 
+                          for prop, val in self.properties.items() 
+                          if val is True],
+            "violated": [prop 
+                         for prop, val in self.properties.items() 
+                         if val is False],
+            "na": [prop 
+                   for prop, val in self.properties.items() 
+                   if val is None]
+                }
+
+    def save_properties(self, filename=None, timeout=10):
+        """Save the properties of the voting method to a JSON file."""
+
+        # Determine the path to the properties file
+        if filename is None:
+            filename = importlib.resources.files('pref_voting') / 'data' / 'voting_methods_properties.json'
+
+
+        lock = FileLock(f"{filename}.lock", timeout=timeout)
+        try:
+            with lock:
+                try:
+                    with open(filename, 'r') as file:
+                        vm_props = json.load(file)
+                except FileNotFoundError:
+                    vm_props = {}
+
+                vm_props[self.name] = self.properties.__dict__
+
+                with open(filename, 'w') as file:
+                    json.dump(vm_props, file, indent=4, sort_keys=True)
+        except Timeout:
+            print(f"Could not acquire the lock within {timeout} seconds.")
+
+    def get_violation_witness(self, prop, minimal_resolute=False, minimal=False):
+        """Return the election that witnesses a violation of prop."""
+
+        from pref_voting.profiles import Profile
+
+        elections = {
+            "minimal resolute": None,
+            "minimal": None,
+            "any": None
+        }
+        if self.properties[prop]:
+            print(f"{self.name} satisfies {prop}, no election returned.")
+            return elections
+        elif self.properties[prop] is None:
+            print(f"{self.name} does not have a value for {prop}, no election returned.")
+            return elections
+        else:
+            dir = importlib.resources.files('pref_voting') / 'data' / 'examples' / prop
+
+            for f in glob.glob(f"{dir}*"):
+                fname = os.path.basename(f)
+                is_min = fname.startswith("minimal_")
+                is_min_resolute = fname.startswith("minimal_resolute")
+                found_it = False
+                if is_min_resolute and fname.startswith(f"minimal_resolute_{self.name.replace(' ', '_')}"): 
+                    print(f"Minimal resolute election for a violation of {prop} found.")
+                    elections["minimal resolute"] = Profile.from_preflib(f)
+                if is_min and not is_min_resolute and fname.startswith(f"minimal_{self.name.replace(' ', '_')}"):
+                    print(f"Minimal election for a violation of {prop} found.")
+                    elections["minimal"] = Profile.from_preflib(f)
+
+                elif not is_min and not is_min_resolute and  fname.startswith(f"{self.name.replace(' ', '_')}"):
+                    elections["any"] = Profile.from_preflib(f)
+            if all([v is None for v in elections.values()]):
+                print(f"No election found illustrating the violation of {prop}.")
+            return elections
+
+    def check_property(self, prop, include_counterexample=True): 
+        """Check if the voting method satisfies a property."""
+        from pref_voting.axioms import axioms_dict
+
+        if not self.properties[prop]: 
+            print(f"{self.name} does not satisfy {prop}")
+            if include_counterexample:
+                if prop in axioms_dict:
+                    #prof = prof
+                    axioms_dict[prop].counterexample(self)
+
+        elif self.properties[prop] is None: 
+            print(f"{self.name} does not have a value for {prop}")
+        
+        else:
+            print(f"{self.name} satisfies {prop}")
+
     def __str__(self): 
         return f"{self.name}"
 
-def vm(name = None):
+def vm(name=None, 
+       input_types=None, 
+       skip_registration=False):
     """
     A decorator used when creating a voting method. 
     """
     def wrapper(f):
-        return VotingMethod(f, name=name)
+        return VotingMethod(f, 
+                            name=name,
+                            input_types=input_types, 
+                            skip_registration=skip_registration)
     return wrapper
 
 def isin(arr, val):
