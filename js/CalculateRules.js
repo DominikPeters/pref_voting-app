@@ -123,6 +123,10 @@ function appendCandidatesInline(parent, cands) {
     });
 }
 
+function getOutputType(rule) {
+    return rules[rule].outputType || "vm";
+}
+
 function appendScoreList(parent, scores) {
     const ul = document.createElement("ul");
     const entries = Object.entries(scores || {}).sort((a, b) => Number(b[1]) - Number(a[1]));
@@ -337,16 +341,128 @@ function populateCommitteeInfoModal(rule) {
     }, 0);
 }
 
-function _calculateRule(rule, forceIrresolute = false) {
-    let result;
-    result = window.pyodide.runPython(`
+function renderVmResult(rule, result) {
+    const cell = document.getElementById("rule-" + rule + "-results");
+    if (!cell) {
+        return;
+    }
+    cell.innerHTML = "";
+    for (let j of result.winners) {
+        const chip = document.createElement("div");
+        chip.className = "candidate-chip";
+        chip.style.backgroundColor = settings.colors[j];
+        chip.innerHTML = state.cmap[j] || j;
+        chip.dataset.rule = rule;
+        chip.dataset.candidate = j;
+        cell.appendChild(chip);
+    }
+}
+
+function renderSwfResult(rule, result) {
+    const cell = document.getElementById("rule-" + rule + "-results");
+    if (!cell) {
+        return;
+    }
+    cell.innerHTML = "";
+    if (result.error) {
+        const err = document.createElement("span");
+        err.className = "property-cell-failed";
+        err.innerText = `SWF error: ${result.error}`;
+        cell.appendChild(err);
+        return;
+    }
+
+    const allRankings = Array.isArray(result.rankings) && result.rankings.length > 0
+        ? result.rankings
+        : [Array.isArray(result.ranking) ? result.ranking : []];
+
+    const renderSingleRanking = (ranking) => {
+        const row = document.createElement("div");
+        row.className = "swf-ranking-row";
+        ranking.forEach((tier, idx) => {
+            const tierDiv = document.createElement("div");
+            tierDiv.className = "swf-ranking-tier";
+            appendCandidatesInline(tierDiv, tier);
+            row.appendChild(tierDiv);
+            if (idx < ranking.length - 1) {
+                const sep = document.createElement("div");
+                sep.className = "swf-ranking-sep";
+                sep.innerText = ">";
+                row.appendChild(sep);
+            }
+        });
+        return row;
+    };
+
+    const PREVIEW_COUNT = 3;
+    const previewCount = Math.min(PREVIEW_COUNT, allRankings.length);
+    for (let i = 0; i < previewCount; i++) {
+        cell.appendChild(renderSingleRanking(allRankings[i]));
+    }
+
+    if (allRankings.length > PREVIEW_COUNT) {
+        const remaining = allRankings.length - PREVIEW_COUNT;
+        const toggle = document.createElement("button");
+        toggle.type = "button";
+        toggle.className = "swf-more-toggle";
+        toggle.innerText = `(+${remaining} more)`;
+
+        const hidden = document.createElement("div");
+        hidden.className = "swf-hidden-rankings";
+        hidden.style.display = "none";
+        for (let i = PREVIEW_COUNT; i < allRankings.length; i++) {
+            hidden.appendChild(renderSingleRanking(allRankings[i]));
+        }
+
+        toggle.addEventListener("click", () => {
+            const expanded = hidden.style.display !== "none";
+            hidden.style.display = expanded ? "none" : "block";
+            toggle.innerText = expanded ? `(+${remaining} more)` : "(show less)";
+        });
+
+        cell.appendChild(toggle);
+        cell.appendChild(hidden);
+    }
+}
+
+function clearPropertyCell(rule) {
+    const cell = document.getElementById("rule-" + rule + "-property-cell");
+    if (cell) {
+        cell.innerHTML = "";
+    }
+}
+
+function _calculateVmRule(rule) {
+    const result = window.pyodide.runPython(`
         results = ${rules[rule].command}
         if results is None:
             results = []
         results = [int(x) for x in results]
         json.dumps(results)
     `);
-    return JSON.parse(result);
+    return { outputType: "vm", winners: JSON.parse(result) };
+}
+
+function _calculateSwfRule(rule) {
+    const commandName = (rules[rule].resultAdapter || rules[rule].command.split("(")[0]);
+    const result = window.pyodide.runPython(`
+        _pv_swf_result_json(${JSON.stringify(commandName)})
+    `);
+    const parsed = JSON.parse(result);
+    return {
+        outputType: "swf",
+        ranking: parsed.ranking || [],
+        rankings: parsed.rankings || null,
+        error: parsed.error || null
+    };
+}
+
+function _calculateRule(rule) {
+    const outputType = getOutputType(rule);
+    if (outputType === "swf") {
+        return _calculateSwfRule(rule);
+    }
+    return _calculateVmRule(rule);
 }
 
 export async function calculateRules() {
@@ -384,40 +500,38 @@ export async function calculateRules() {
         ${profileString}
         agenda = ${JSON.stringify(state.agenda)}
     `);
-    let table = document.getElementById("profile-table");
-    let tBody = table.getElementsByTagName("tbody")[0];
     for (let rule in rules) {
         if (!rules[rule].active) {
             continue;
         }
         setTimeout(() => {
             let result = _calculateRule(rule);
-            state.storedCommittee[rule] = result;
-            let cell = document.getElementById("rule-" + rule + "-results");
-            cell.innerHTML = "";
-            for (let j of result) {
-                var chip = document.createElement("div");
-                chip.className = "candidate-chip";
-                chip.style.backgroundColor = settings.colors[j];
-                chip.innerHTML = state.cmap[j] || j;
-                chip.dataset.rule = rule;
-                chip.dataset.candidate = j;
-                cell.appendChild(chip);
+            state.storedResults[rule] = result;
+            if (result.outputType === "swf") {
+                renderSwfResult(rule, result);
+            } else {
+                renderVmResult(rule, result);
             }
+
             let row = document.getElementById("rule-" + rule + "-row");
-            row.dataset.hystmodal = "#committee-info-modal";
-            row.onclick = function () {
-                populateCommitteeInfoModal(rule);
-            };
-            if (settings.showPropertyinTable) {
+            if (!row) {
+                return;
+            }
+            if (result.outputType === "vm") {
+                row.dataset.hystmodal = "#committee-info-modal";
+                row.onclick = function () {
+                    populateCommitteeInfoModal(rule);
+                };
+            } else {
+                row.removeAttribute("data-hystmodal");
+                row.onclick = null;
+            }
+            if (result.outputType === "vm" && settings.showPropertyinTable) {
                 setTimeout(() => {
                     renderPropertyCell(rule, settings.showPropertyinTable);
                 }, 0);
             } else {
-                const cell = document.getElementById("rule-" + rule + "-property-cell");
-                if (cell) {
-                    cell.innerHTML = "";
-                }
+                clearPropertyCell(rule);
             }
         }, 0);
     }

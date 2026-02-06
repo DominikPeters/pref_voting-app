@@ -44,6 +44,10 @@ export async function loadPython() {
         from pref_voting.margin_based_methods import *
         from pref_voting.combined_methods import *
         from pref_voting.other_methods import *
+        from pref_voting.scoring_methods import plurality_ranking, borda_ranking, anti_plurality_ranking
+        from pref_voting.iterative_methods import instant_runoff_ranking
+        from pref_voting.c1_methods import copeland_ranking
+        from pref_voting.other_methods import kemeny_young_rankings
         from pref_voting.iterative_methods import (
             instant_runoff_with_explanation,
             plurality_with_runoff_put_with_explanation,
@@ -251,6 +255,45 @@ export async function loadPython() {
                 except Exception:
                     pass
                 return json.dumps({"ok": False, "error": str(e)})
+
+        def _pv_swf_result_json(method_name):
+            try:
+                if method_name == "kemeny_young_ranking_adapter":
+                    rankings, _dist = kemeny_young_rankings(profile, curr_cands=agenda)
+                    if rankings is None or len(rankings) == 0:
+                        return json.dumps({"ranking": []})
+                    rankings_json = []
+                    for linear_ranking in rankings:
+                        rankings_json.append([[int(c)] for c in list(linear_ranking)])
+                    return json.dumps({"ranking": rankings_json[0], "rankings": rankings_json})
+
+                fn = globals().get(method_name)
+                if fn is None:
+                    return json.dumps({"ranking": [], "error": f"Unknown SWF method: {method_name}"})
+
+                ranking_obj = fn(profile, curr_cands=agenda)
+                if ranking_obj is None:
+                    return json.dumps({"ranking": []})
+
+                if hasattr(ranking_obj, "ranks") and hasattr(ranking_obj, "cands_at_rank"):
+                    ranking = []
+                    for r in ranking_obj.ranks:
+                        tier = [int(c) for c in ranking_obj.cands_at_rank(r)]
+                        ranking.append(tier)
+                    return json.dumps({"ranking": ranking})
+
+                if isinstance(ranking_obj, (list, tuple)):
+                    ranking = []
+                    for tier in ranking_obj:
+                        if isinstance(tier, (list, tuple, set)):
+                            ranking.append([int(c) for c in tier])
+                        else:
+                            ranking.append([int(tier)])
+                    return json.dumps({"ranking": ranking})
+
+                return json.dumps({"ranking": [], "error": f"Unsupported SWF return type from {method_name}: {type(ranking_obj).__name__}"})
+            except Exception as e:
+                return json.dumps({"ranking": [], "error": str(e)})
     `);
     populatePropertyDropdown();
     // enable all buttons and inputs

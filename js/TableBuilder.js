@@ -1,5 +1,5 @@
 import { settings, state } from './globalState.js';
-import { rules, deleteIconHTML } from './constants.js';
+import { rules, outputTypes, deleteIconHTML } from './constants.js';
 import { calculateRules } from './CalculateRules.js';
 import { deleteCandidate, deleteVoter, toggleAgenda, updateVotingMlLink } from './InstanceManagement.js';
 import Sortable from '../imports/sortable.core.esm.min.js';
@@ -103,53 +103,75 @@ export function buildTable() {
             trashCell.appendChild(trash);
         }
     }
-    // spacer row
-    var row = tablebody.insertRow();
-    row.style.height = "1em";
-    // insert table foot for rule rows
-    let tablefoot = table.createTFoot();
-    tablefoot.classList.add("rule-table-rows");
-    let number_of_rules_selected = Object.values(rules).filter(rule => rule.active).length;
-    if (number_of_rules_selected * 33 >= 0.4 * window.innerHeight) {
-        // not enough space for sticky
-        tablefoot.style.position = 'static';
-    }
-    let currentCategory = "";
-    // already draw rows for each rule to avoid flickering
-    for (let rule in rules) {
-        if (!rules[rule].active) {
-            continue;
-        }
-        if (rules[rule].category != currentCategory) {
-            currentCategory = rules[rule].category;
-            let row = tablefoot.insertRow();
-            row.classList.add("category-row");
-            let cell = row.insertCell();
-            cell.colSpan = 4;
-            cell.innerHTML = currentCategory;
-        }
-        let row = tablefoot.insertRow();
-        row.id = "rule-" + rule + "-row";
-        row.classList.add("rule-row");
-        let cell = row.insertCell();
-        let span = document.createElement("span");
-        span.innerHTML = rules[rule].shortName;
-        tippy(span, {
-            content: rules[rule].fullName,
-            theme: "light",
-        });
-        cell.appendChild(span);
-        let resultsCell = row.insertCell();
-        resultsCell.id = "rule-" + rule + "-results";
-        cell = row.insertCell();
-        cell.id = "rule-" + rule + "-property-cell";
-        cell.classList.add("empty-cell");
-    }
+    const spacerRow = tablebody.insertRow();
+    spacerRow.style.height = "1em";
+
+    buildResultSections();
+
     if (window.pyodide) {
         // wait for browser to render table
         setTimeout(function () {
             calculateRules();
         }, 0);
+    }
+}
+
+function buildResultSections() {
+    const sectionsHost = document.getElementById("results-sections");
+    sectionsHost.innerHTML = "";
+
+    for (const outputType of Object.keys(outputTypes)) {
+        const activeRules = Object.keys(rules).filter(rule => rules[rule].active && (rules[rule].outputType || "vm") === outputType);
+        if (activeRules.length === 0) {
+            continue;
+        }
+
+        const section = document.createElement("section");
+        section.classList.add("results-section");
+        section.id = `results-section-${outputType}`;
+
+        const heading = document.createElement("h3");
+        heading.innerText = outputTypes[outputType].label;
+        section.appendChild(heading);
+
+        const table = document.createElement("table");
+        table.classList.add("results-table");
+        table.id = `results-table-${outputType}`;
+        const body = table.createTBody();
+        let currentCategory = "";
+        for (const rule of activeRules) {
+            if (rules[rule].category !== currentCategory) {
+                currentCategory = rules[rule].category;
+                const categoryRow = body.insertRow();
+                categoryRow.classList.add("category-row");
+                const cell = categoryRow.insertCell();
+                cell.colSpan = 3;
+                cell.innerHTML = currentCategory;
+            }
+
+            const row = body.insertRow();
+            row.id = "rule-" + rule + "-row";
+            row.classList.add("rule-row");
+
+            const nameCell = row.insertCell();
+            const span = document.createElement("span");
+            span.innerHTML = rules[rule].shortName;
+            tippy(span, {
+                content: rules[rule].fullName,
+                theme: "light",
+            });
+            nameCell.appendChild(span);
+
+            const resultCell = row.insertCell();
+            resultCell.id = "rule-" + rule + "-results";
+
+            const propertyCell = row.insertCell();
+            propertyCell.id = "rule-" + rule + "-property-cell";
+            propertyCell.classList.add("empty-cell");
+        }
+
+        section.appendChild(table);
+        sectionsHost.appendChild(section);
     }
 }
 

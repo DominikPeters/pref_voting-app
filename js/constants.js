@@ -573,6 +573,73 @@ export const rules = {
         "command": "superior_voting(profile, curr_cands=agenda)",
         "supportsWeakOrders": 0,
         "active": 0
+    },
+
+    "swf_plurality_ranking": {
+        "fullName": "Plurality ranking",
+        "shortName": "Plurality ranking",
+        "category": "Social Welfare Functions",
+        "command": "plurality_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 1,
+        "outputType": "swf"
+    },
+    "swf_borda_ranking": {
+        "fullName": "Borda ranking",
+        "shortName": "Borda ranking",
+        "category": "Social Welfare Functions",
+        "command": "borda_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 1,
+        "outputType": "swf"
+    },
+    "swf_anti_plurality_ranking": {
+        "fullName": "Anti-Plurality ranking",
+        "shortName": "Anti-Plurality ranking",
+        "category": "Social Welfare Functions",
+        "command": "anti_plurality_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 1,
+        "outputType": "swf"
+    },
+    "swf_copeland_ranking": {
+        "fullName": "Copeland ranking",
+        "shortName": "Copeland ranking",
+        "category": "Social Welfare Functions",
+        "command": "copeland_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 1,
+        "active": 1,
+        "outputType": "swf"
+    },
+    "swf_instant_runoff_ranking": {
+        "fullName": "Instant Runoff ranking",
+        "shortName": "Instant Runoff ranking",
+        "category": "Social Welfare Functions",
+        "command": "instant_runoff_ranking(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 1,
+        "outputType": "swf"
+    },
+    "swf_kemeny_young_ranking_adapter": {
+        "fullName": "Kemeny-Young ranking (adapter)",
+        "shortName": "Kemeny-Young ranking",
+        "category": "Social Welfare Functions",
+        "command": "kemeny_young_ranking_adapter(profile, curr_cands=agenda)",
+        "supportsWeakOrders": 0,
+        "active": 1,
+        "outputType": "swf",
+        "resultAdapter": "kemeny_young_ranking_adapter"
+    }
+}
+
+export const outputTypes = {
+    vm: { label: "Voting Methods", supportsAxioms: true },
+    swf: { label: "Social Welfare Functions", supportsAxioms: false },
+};
+
+for (const rule of Object.keys(rules)) {
+    if (!rules[rule].outputType) {
+        rules[rule].outputType = "vm";
     }
 }
 
