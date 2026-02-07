@@ -119,6 +119,7 @@ export function buildTable() {
 function buildResultSections() {
     const sectionsHost = document.getElementById("results-sections");
     sectionsHost.innerHTML = "";
+    const showLoadingPlaceholders = !window.pyodide;
 
     for (const outputType of Object.keys(outputTypes)) {
         const activeRules = Object.keys(rules).filter(rule => rules[rule].active && (rules[rule].outputType || "vm") === outputType);
@@ -138,15 +139,18 @@ function buildResultSections() {
         table.classList.add("results-table");
         table.id = `results-table-${outputType}`;
         const body = table.createTBody();
-        let currentCategory = "";
+        const categories = new Set(activeRules.map(rule => rules[rule].category || ""));
+        const showCategoryRows = categories.size > 1;
+        let currentCategory = null;
         for (const rule of activeRules) {
-            if (rules[rule].category !== currentCategory) {
-                currentCategory = rules[rule].category;
+            const ruleCategory = rules[rule].category || "";
+            if (showCategoryRows && ruleCategory !== currentCategory) {
+                currentCategory = ruleCategory;
                 const categoryRow = body.insertRow();
                 categoryRow.classList.add("category-row");
                 const cell = categoryRow.insertCell();
                 cell.colSpan = 3;
-                cell.innerHTML = currentCategory;
+                cell.textContent = currentCategory;
             }
 
             const row = body.insertRow();
@@ -164,6 +168,9 @@ function buildResultSections() {
 
             const resultCell = row.insertCell();
             resultCell.id = "rule-" + rule + "-results";
+            if (showLoadingPlaceholders && (rules[rule].outputType || "vm") === "vm") {
+                renderPlaceholderVmResult(rule, resultCell);
+            }
 
             const propertyCell = row.insertCell();
             propertyCell.id = "rule-" + rule + "-property-cell";
@@ -172,6 +179,20 @@ function buildResultSections() {
 
         section.appendChild(table);
         sectionsHost.appendChild(section);
+    }
+}
+
+function renderPlaceholderVmResult(rule, cell) {
+    const command = rules[rule].command || "";
+    const isAntiPlurality = rule === "anti-plurality" || command.startsWith("anti_plurality(");
+    const winners = isAntiPlurality ? state.C.slice(0, 3) : state.C.slice(0, 1);
+
+    for (const j of winners) {
+        const chip = document.createElement("div");
+        chip.className = "candidate-chip";
+        chip.style.backgroundColor = settings.colors[j];
+        chip.textContent = state.cmap[j] || String(j);
+        cell.appendChild(chip);
     }
 }
 

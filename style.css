@@ -145,7 +145,7 @@ aside .checkbox-option {
     align-items: center;
 }
 
-section {
+main > section {
     padding: 1em 1em 1em calc(var(--sidebar-width) + 1em);
     display: flex;
     flex-direction: column;
@@ -707,7 +707,7 @@ ul#probability-distributions-list li {
         font-size: 90%;
     }
 
-    section {
+    main > section {
         padding: 0.1em;
         width: 100vw;
         max-width: 100vw;
